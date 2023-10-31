@@ -40,8 +40,8 @@ def integral(lambda1, lambda2,lambda3,T,n):
 	return (1/T)*np.sum(np.sum(function_y(lambda1, lambda2,lambda3,T,n),axis = 1)*T/n )
 
 def integrals(lambda1, lambda3 = 1.65,T = 5,n = 100):
-        #Riemann sum approxiamation left sided
-        return (1/T)*np.sum(np.sum(function_y(lambda1[0], lambda1[1],lambda3,T,n),axis = 1)*T/n )
+		#Riemann sum approxiamation left sided
+		return (1/T)*np.sum(np.sum(function_y(lambda1[0], lambda1[1],lambda3,T,n),axis = 1)*T/n )
 
 ## partial derivatives
 def dy_dlambda1_t(lambda1, lambda2,lambda3,T,n):
@@ -96,17 +96,17 @@ def DQ_Dlambda(Lambda,lambda3 = 1.65,T = 5,n = 100):
 
 # random sampling
 def Brusselator_Data_2_with_f(n, CONST_threshold = 3.75):
-    X = np.random.uniform(0.7, 1.5, n)
-    Y = np.random.uniform(2.75, 3.25, n)
-    integral_vec = np.vectorize(integral)
-    
-    df=pd.DataFrame(data={"X":X,"Y":Y})
-    Z = df.apply(integrals, axis = 1)
-    df['Label'] = np.zeros(n) -1
-    index = Z >= CONST_threshold
-    df['Label'][index] = 1
-    df['f'] = Z
-    return df
+	X = np.random.uniform(0.7, 1.5, n)
+	Y = np.random.uniform(2.75, 3.25, n)
+	integral_vec = np.vectorize(integral)
+	
+	df=pd.DataFrame(data={"X":X,"Y":Y})
+	Z = df.apply(integrals, axis = 1)
+	df['Label'] = np.zeros(n) -1
+	index = Z >= CONST_threshold
+	df['Label'][index] = 1
+	df['f'] = Z
+	return df
 
 
 def Brusselator_Data_2_with_f_POF(numPoints, CONST_a, CONST_threshold = 3.75, iniPoints = 1):
@@ -125,66 +125,109 @@ def Brusselator_Data_2_with_f_POF(numPoints, CONST_a, CONST_threshold = 3.75, in
 	df = pd.DataFrame(data)
 	return df
 
+class SIP_Data(object):
+	def __init__(self, function_y, function_gradient,CONST_threshold = 3.75, xlim = [0.7,1.5], ylim = [2.75, 3.25]):
+		self.CONST_threshold = CONST_threshold
+		self.xlim = xlim
+		self.ylim = ylim
+		self.function_y = function_y
+		self.function_gradient = function_gradient
+		self.df = []
+		self.Gradient = []
+
+	def generate_Uniform(self,n):
+		X = np.random.uniform(self.xlim[0], self.xlim[1], n)
+		Y = np.random.uniform(self.ylim[0], self.ylim[1], n)
+		df=pd.DataFrame(data={"X":X,"Y":Y})
+
+		Z = df.apply(self.function_y, axis = 1)
+		self.Gradient = df.apply(self.function_gradient, axis = 1)
+		df['Label'] = np.zeros(n) -1
+		index = Z >= self.CONST_threshold 
+		df['Label'][index] = 1
+		df['f'] = Z
+		self.df = df
+		
+
+	def generate_POF(self,n,CONST_a ,iniPoints = 1, max_iterations  = 1000):
+		self.POFdarts = POFdarts( self.function_y, self.function_gradient , CONST_a,  self.CONST_threshold , max_iterations  = 1000 )
+		self.POFdarts.Generate_2D(iniPoints = iniPoints, N = n - iniPoints,xlim = self.xlim, ylim = self.ylim)
+		self.Gradient = self.POFdarts.Q
+		self.df = pd.DataFrame(data={"X":np.array(self.POFdarts.df)[:,0],"Y":np.array(self.POFdarts.df)[:,1]})
+
+		self.df['Label'] = np.zeros(n) -1
+		index = np.array(self.POFdarts.y) >= self.CONST_threshold 
+		self.df['Label'][index] = 1
+		self.df['f'] = self.POFdarts.y
+
+
+
+
+
+
+
+
+
 # Simulated example 1 -------------------------
 def function1(x):
-    return ((x[1]-.5*(np.tanh(20*x[0])*np.tanh(20*(x[0]-.5))+1)*np.exp(.2*x[0]**2)))**2
+	return ((x[1]-.5*(np.tanh(20*x[0])*np.tanh(20*(x[0]-.5))+1)*np.exp(.2*x[0]**2)))**2
 
 def Gradient_f1(x, y):
-    dx = 2*((y-.5*(np.tanh(20*x)*np.tanh(20*(x-.5))+1)*np.exp(.2*x**2)))*( 
-        -0.5*(
-                (0.4*x)*np.exp(0.2*x**2)*(np.tanh(20*x)*np.tanh(20*(x-.5)) + 1 )+
-                np.exp(0.2*x**2)*(( 1 - np.tanh(20*x)**2 )*20*np.tanh(20*(x-.5))+ 
-                                    np.tanh(20*x)*(1 - np.tanh(20*(x-.5))**2)*20)
-        )
-    )
-    dy = 2*((y-.5*(np.tanh(20*x)*np.tanh(20*(x-.5))+1)*np.exp(.2*x**2)))
-    return np.array([dx,dy])
+	dx = 2*((y-.5*(np.tanh(20*x)*np.tanh(20*(x-.5))+1)*np.exp(.2*x**2)))*( 
+		-0.5*(
+				(0.4*x)*np.exp(0.2*x**2)*(np.tanh(20*x)*np.tanh(20*(x-.5)) + 1 )+
+				np.exp(0.2*x**2)*(( 1 - np.tanh(20*x)**2 )*20*np.tanh(20*(x-.5))+ 
+									np.tanh(20*x)*(1 - np.tanh(20*(x-.5))**2)*20)
+		)
+	)
+	dy = 2*((y-.5*(np.tanh(20*x)*np.tanh(20*(x-.5))+1)*np.exp(.2*x**2)))
+	return np.array([dx,dy])
 
 
 
 
-def example1_Data(n, c = 0.5): 
-    X = np.random.uniform(0, 2, n)
-    Y = np.random.uniform(0, 2, n)
-    df=pd.DataFrame(data={"X":X,"Y":Y})
-    Z = df.apply(function1, axis = 1)
-    df['Z'] = np.zeros(n) - 1
-    index = Z >= c
-    df['Z'][index] = 1 
-    return df
+# def example1_Data(n, c = 0.5): 
+#     X = np.random.uniform(0, 2, n)
+#     Y = np.random.uniform(0, 2, n)
+#     df=pd.DataFrame(data={"X":X,"Y":Y})
+#     Z = df.apply(function1, axis = 1)
+#     df['Z'] = np.zeros(n) - 1
+#     index = Z >= c
+#     df['Z'][index] = 1 
+#     return df
 
-def example1_with_f_POF(numPoints, CONST_a, CONST_threshold = 0.5, iniPoints = 1):
+# def example1_with_f_POF(numPoints, CONST_a, CONST_threshold = 0.5, iniPoints = 1):
 
-	POF = POFdarts(function1, Gradient_f1, CONST_a, CONST_threshold)
-	POF.Generate_2D(iniPoints = iniPoints, N = numPoints - iniPoints, xlim = [0,2], ylim = [0,2])
+# 	POF = POFdarts(function1, Gradient_f1, CONST_a, CONST_threshold)
+# 	POF.Generate_2D(iniPoints = iniPoints, N = numPoints - iniPoints, xlim = [0,2], ylim = [0,2])
 	
-	L = np.zeros(numPoints) - 1
-	L[np.array(POF.y) <= CONST_threshold] = 1
-	data = {
-		'X': np.array(POF.df)[:,0],
-		'Y': np.array(POF.df)[:,1],
-		'Z': np.array(POF.y),
-		'Label': L
-	}
-	df = pd.DataFrame(data)
-	return df
+# 	L = np.zeros(numPoints) - 1
+# 	L[np.array(POF.y) <= CONST_threshold] = 1
+# 	data = {
+# 		'X': np.array(POF.df)[:,0],
+# 		'Y': np.array(POF.df)[:,1],
+# 		'Z': np.array(POF.y),
+# 		'Label': L
+# 	}
+# 	df = pd.DataFrame(data)
+# 	return df
 
 # Simulated example 2 -------------------------
 
 B = 1
 A = 10
 def function2(x, A = 10, B = 1):
-    return 1 + np.tanh(B*(x[1] - A*x[0]*(x[0] - 1/2)*(x[0]+1/2)))
+	return 1 + np.tanh(B*(x[1] - A*x[0]*(x[0] - 1/2)*(x[0]+1/2)))
 
-def example2_Data(n, c = 0.5): 
-    X = np.random.uniform(-1, 1, n)
-    Y = np.random.uniform(-1, 1, n)
-    df=pd.DataFrame(data={"X":X,"Y":Y})
-    Z = df.apply(function2, axis = 1)
-    df['Z'] = np.zeros(n) - 1
-    index = Z >= c
-    df['Z'][index] = 1 
-    return df
+# def example2_Data(n, c = 0.5): 
+#     X = np.random.uniform(-1, 1, n)
+#     Y = np.random.uniform(-1, 1, n)
+#     df=pd.DataFrame(data={"X":X,"Y":Y})
+#     Z = df.apply(function2, axis = 1)
+#     df['Z'] = np.zeros(n) - 1
+#     index = Z >= c
+#     df['Z'][index] = 1 
+#     return df
 
 
 

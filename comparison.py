@@ -1,5 +1,5 @@
 import numpy as np
-from dataGeneration import Brusselator_Data_2_with_f, example1_Data, example2_Data, create_binary_class_boundary_spiral
+from dataGeneration import create_binary_class_boundary_spiral
 import matplotlib.pyplot as plt
 from CBP import PSVM, GPSVM, LSVM
 from sklearn.model_selection import train_test_split
@@ -113,7 +113,6 @@ def Running_time(N,outfile,outfileTotal,repeat = 20):
 
 
 def main():
-	df = example1_Data(500,1)
 	Running_time(N = [100,200,300,500,800,1000,1500,2000], outfile = 'Results/running_time.csv', outfileTotal = 'Results/running_time_total.csv')
 	return
 
