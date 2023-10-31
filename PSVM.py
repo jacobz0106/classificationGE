@@ -117,7 +117,7 @@ class MagKmeans(object):
 		problem = cp.Problem(objective, constraints)
 
 		# List of solvers to try
-		solvers = ["MOSEK", "ECOS", "SCS", "GUROBI"]
+		solvers = [ "GUROBI", "ECOS", "SCS"]
 
 		optimal_solution_found = False
 
