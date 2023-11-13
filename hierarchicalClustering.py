@@ -8,10 +8,11 @@ import math
 
 
 class hierarchicalClustering(object):
-	def __init__(self, n_clusters, CONST_C,max_iterations  = 4000, random_state = 0, difftype = "cosine difference", mergeCriteria = "inertia"):
+	def __init__(self, n_clusters, CONST_C,max_iterations  = 4000, random_state = 0, difftype = "cosine difference", mergeCriteria = "inertia", verbose = False):
 		'''
 		mergeCriteria: "inertia", 
 		'''
+		self.verbose = verbose
 		self.type = difftype
 		self.mergeCriteria = mergeCriteria
 		self.n_clusters = n_clusters
@@ -20,6 +21,9 @@ class hierarchicalClustering(object):
 		self.distMatrix = []
 		self.Gradient = []
 		self.dTrain = []
+
+		self.GeMatrix = []
+		self.mergeMatrix = []
 
 
 		# update below when ever merge
@@ -33,69 +37,106 @@ class hierarchicalClustering(object):
 
 
 
+	def Initialized_Gabriel_edited_Matrix(self):
+		def Gabriel_neighbors(indexi):
+			inCluster = np.repeat(-1, self.n )
+			inCluster[indexi] = 1
+			Ge_model = CBP(self.dTrain,inCluster, Euc_d  = self.distMatrix)
+			Gabriel_neighbors = np.array(Ge_model.points)[:,1]
+			isGabrielNeighbors = np.repeat(0, self.n)
+			isGabrielNeighbors[Gabriel_neighbors ] = 1
+			return(isGabrielNeighbors)
+
+		self.GeMatrix  = np.vstack([Gabriel_neighbors(indexi) for indexi in range(self.n)])
+
+
+	def Initialize_InertiaInc_Matrix(self):
+		# inertia increment will always be positive, inf indicates they are not Gabriel neighbors. 
+		self.mergeMatrix = np.full((self.currentNumClusters, self.currentNumClusters), np.inf)
+
+		for i in range(self.currentNumClusters):
+			Gabriel_neighbors = self.Gabriel_neighbor_of_centroid(i)
+			i_array = np.full(shape=(len(Gabriel_neighbors), 1), fill_value=i)
+			# Pair i with the original array to create a 2D array
+			index_pairs = np.hstack((i_array, Gabriel_neighbors.reshape(-1, 1)))
+			for index_pair in index_pairs:
+				# contains some redundant calculations/(i,j) and (j,i). 
+				self.mergeMatrix[index_pair[0], index_pair[1]] = self.inertia_Increment_If_Merge(index_pair[0], index_pair[1])
+
+	def Update_InertiaInc_Matrix(self,index_i, index_j):
+		
+
+		if index_i > index_j:
+			index_i = index_i - 1
+
+		# Delete the j-th column/row from the matrix
+		self.mergeMatrix  = np.delete(self.mergeMatrix , index_j, axis=1)
+		self.mergeMatrix  = np.delete(self.mergeMatrix , index_j, axis=0)
+
+		# Recalculate i-th column/row since ith cluster is now merged.
+		self.mergeMatrix[index_i,:] = np.inf
+		self.mergeMatrix[:,index_i] = np.inf
+
+		Gabriel_neighbors = self.Gabriel_neighbor_of_centroid(index_i)
+		i_array = np.full(shape=(len(Gabriel_neighbors), 1), fill_value=index_i)
+		# Pair i with the original array to create a 2D array
+		index_pairs = np.hstack((i_array, Gabriel_neighbors.reshape(-1, 1)))
+		for index_pair in index_pairs:
+			# contains some redundant calculations/(i,j) and (j,i). 
+			self.mergeMatrix[index_pair[0], index_pair[1]] = self.inertia_Increment_If_Merge(index_pair[0], index_pair[1])
+
+
 	def merge(self):
 		'''
 		merge the cluster with smallest difference in Intra-cluster distance + gradients
 
 		'''
 		print(self.currentNumClusters)
-		# print(self.labels_)
+		if self.verbose == True:
+			print(self.currentNumClusters)
 		if self.currentNumClusters <= self.n_clusters:
 			raise ValueError("Current number of clusters is less than K!")
-
-		# find the min Gabriel neighboring centroids
-		differenceArray = np.zeros( self.currentNumClusters )
-		# store the cluster with min inertia increment if merge with.
-		indexArray = np.repeat(0,self.currentNumClusters )
-
-		# check here!!!---------------------------------------------
-		for i in range(self.currentNumClusters):
-			GE_clusterIndex = self.Gabriel_neighbor_of_centroid(i)
-			# print('cluster:',i,'with size',np.sum(self.clusterMembership[:,i] ),'\n')
-			# print('GeIndex:',GE_clusterIndex, '\n')
-			if self.mergeCriteria == "angularDiff":
-				inertiaIncrementArray = np.array([self.cosAngularDifference_If_Merge(i,j) for j in GE_clusterIndex])
-			else:
-				inertiaIncrementArray = np.array([self.inertia_Increment_If_Merge(i,j) for j in GE_clusterIndex])
-			# print('incresement:' ,inertiaIncrementArray, '\n')
-			differenceArray[i] = np.min(inertiaIncrementArray)
-			indexArray[i] = GE_clusterIndex[np.argmin(inertiaIncrementArray)]
-		# merge the smallest increment pair
 		
-		index_toMerge_i = np.argmin(differenceArray)
-		index_toMerge_j = indexArray[index_toMerge_i]
+		# ------------------------ Merge and Update ------------------------------------
+
+		# merge the smallest increment pair
+		flat_index_of_smallest = self.mergeMatrix.argmin()
+		index_of_smallest = np.unravel_index(flat_index_of_smallest, self.mergeMatrix.shape)
+		index_toMerge_i = index_of_smallest[0]
+		index_toMerge_j = index_of_smallest[1]
 
 		if index_toMerge_i == index_toMerge_j:
-			raise ValueError('wrone merge! cannot merge with itself')
+			raise ValueError('wrong merge! cannot merge with itself')
 		# update 
-		# plt.scatter(self.dTrain[:,0], self.dTrain[:,1], c = self.labels_)
-		
-		# plt.scatter(self.dTrain[self.clusterMembership[:,index_toMerge_i]==1,0], self.dTrain[self.clusterMembership[:,index_toMerge_i]==1,1], c = 'none', edgecolors='red',marker = 'H', s = 200)
-		# plt.scatter(self.dTrain[self.clusterMembership[:,index_toMerge_j]==1,0], self.dTrain[self.clusterMembership[:,index_toMerge_j]==1,1], c = 'none', edgecolors='black',marker = 'H', s = 100)
-		# plt.show()
+		if self.verbose == True:
+			plt.scatter(self.dTrain[:,0], self.dTrain[:,1], c = self.labels_)
+			plt.scatter(self.dTrain[self.clusterMembership[:,index_toMerge_i]==1,0], self.dTrain[self.clusterMembership[:,index_toMerge_i]==1,1], c = 'none', edgecolors='red',marker = 'H', s = 200)
+			plt.scatter(self.dTrain[self.clusterMembership[:,index_toMerge_j]==1,0], self.dTrain[self.clusterMembership[:,index_toMerge_j]==1,1], c = 'none', edgecolors='black',marker = 'H', s = 100)
+			plt.show()
+
+		if self.inertia_Increment_If_Merge(index_toMerge_i, index_toMerge_j) <0:
+			raise ValueError('negative increase?')
 
 		self.inertia_ = self.inertia_ + self.inertia_Increment_If_Merge(index_toMerge_i, index_toMerge_j)
+
 		self.currentNumClusters = self.currentNumClusters - 1
-
-		# update cluster membership
-
+		# update cluster membership, delete cluster j, merge its members to cluster i.
 		self.labels_[self.labels_ == index_toMerge_j] = index_toMerge_i
 		# Create an empty mapping dictionary
 		mapping = {}
-
 		# Iterate through the unique labels and assign a new value iteratively
 		unique_labels = set(self.labels_)
 		for idx, label in enumerate(unique_labels):
-		    mapping[label] = idx
-
+			mapping[label] = idx
 		# Transform the labels using the mapping
 		self.labels_ = np.array([mapping[label] for label in self.labels_])
 		self.clusterMembership = np.zeros((self.n, self.currentNumClusters),  dtype=int)
-
 		for i in range(self.n):
 			self.clusterMembership[i,self.labels_[i]] = 1
-
 		self.cluster_centers_ = [ np.mean(np.array(self.dTrain[self.clusterMembership[:,i]==1,:]),axis = 0) for i in range(self.currentNumClusters)]
+		# Update mergeMatrix 
+		self.Update_InertiaInc_Matrix(index_of_smallest[0],index_of_smallest[1])
+
 
 
 
@@ -122,7 +163,7 @@ class hierarchicalClustering(object):
 
 		return inertia_Merged - self.Innertia(i) - self.Innertia(j)
 
-	def cosAngularDifference_If_Merge(self, i, j, ):
+	def cosAngularDifference_If_Merge(self, i, j):
 		index = np.arange(self.n)
 		clusterGradient_i = np.mean(self.Gradient[ self.clusterMembership[:,i]==1],axis = 0)
 		clusterGradient_j = np.mean(self.Gradient[ self.clusterMembership[:,j]==1],axis = 0)
@@ -159,49 +200,6 @@ class hierarchicalClustering(object):
 			diff = math.exp(1  + np.abs(1 - cosAngularDifference) )
 		return diff 
 
-	# def Gabriel_neighbor_of_point(self,i, pointsIndexes):
-	# 	'''
-	# 	find the Gbriel neighbors
-	# 	'''
-	# 	if i in pointsIndexes:
-	# 		pointsIndexes = np.delete(pointsIndexes,i)
-
-	# 	Gabriel_set = copy.deepcopy(pointsIndexes)
-	# 	setU = copy.deepcopy(pointsIndexes)
-	# 	for j in Gabriel_set:
-	# 		# check whether i is Gabriel Neighbor
-	# 		for k in setU:
-	# 			if k == j:
-	# 				continue
-	# 			if self.distMatrix[i,j]**2 >= self.distMatrix[i,k]**2 + self.distMatrix[j,k]**2 :
-	# 				# k is inside the sphere so i is not in GE set
-	# 				Gabriel_set = np.delete(Gabriel_set, j)
-	# 				break
-	# 			else: 
-	# 				# test if k is in pointSet,
-	# 				if k in Gabriel_set:
-	# 					# test if j lies inside disk P_ik
-	# 					if self.Euc_d[i,k]**2 > self.Euc_d[i,j]**2 + self.Euc_d[j,k]**2:
-	# 						pointSet = Gabriel_set[Gabriel_set != k]
-	# 	return Gabriel_set				
-
-
-	# def Gabriel_neighbor_of_centroid(self,centroidIndex):
-	# 	'''
-	# 		return the centroids that containing its Gabriel neighbors
-	# 	'''
-	# 	#find the points in the centroids
-	# 	index = np.arange(len(self.dTrain))
-	# 	pointsIndexes = index[self.clusterMembership[:,centroidIndex]]
-
-	# 	pointsToSearch = index[~np.isin(index, pointsIndexes)]
-
-	# 	GE = np.array([])
-	# 	for i in pointsIndexes:
-	# 		GE = np.unqiue(np.append(GE, self.Gabriel_neighbor_of_point(i,pointsToSearch)))
-
-	# 	# find the related Gabriel neighboring centroids of the current centorid
-	# 	return np.unique(self.labels_[GE])
 
 
 	def Gabriel_neighbor_of_centroid(self,centroidIndex):
@@ -210,24 +208,13 @@ class hierarchicalClustering(object):
 		'''
 		#find the points in the centroids
 		index = np.arange(self.n)
-
-
 		pointsIndexes = index[self.labels_ == centroidIndex]
 		pointsToSearch = index[self.labels_ != centroidIndex]
+		neighbors_unfiltered = np.unique(np.concatenate([np.where(np.array(self.GeMatrix)[i,:] == 1)[0] for i in pointsIndexes]))
+		neighbors = neighbors_unfiltered[np.isin(neighbors_unfiltered, list(pointsToSearch))]
 
-		inCluster = np.repeat(1, self.n )
-		inCluster[pointsToSearch] = -1
-
-		Ge_model = CBP(self.dTrain,inCluster, Euc_d  = self.distMatrix)
-		Gabriel_neighbors = np.array(Ge_model.points)[:,1]
-		# check choosed the right index:
-		set1 = set(pointsIndexes)
-		set2 = set(Gabriel_neighbors)
-		if len(set1.intersection(set2)) > 0:
-			raise ValueError('wrong set chosen')
-		# print('Now looking for neighbors of centoid:',centroidIndex)
-		# print('Found Gabriel neighbor centroid:',np.unique(self.labels_[Gabriel_neighbors]))
-		return np.unique(self.labels_[Gabriel_neighbors])
+		return np.unique(self.labels_[neighbors])
+		
 
 
 
@@ -241,9 +228,15 @@ class hierarchicalClustering(object):
 		self.Gradient = Gradient
 		# create a distance matrix
 		self.distMatrix = distance.cdist(dTrain, dTrain, 'euclidean')
+
 		self.clusterMembership = np.identity(self.n,  dtype=int)
 		self.labels_ =  np.argmax(self.clusterMembership, axis=1)
 		self.inertia_ = 0
+
+		self.Initialized_Gabriel_edited_Matrix()
+		self.Initialize_InertiaInc_Matrix()
+
+		
 
 		while self.currentNumClusters > self.n_clusters:
 			self.merge()

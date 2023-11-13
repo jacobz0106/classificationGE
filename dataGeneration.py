@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import numpy as np
 from scipy.optimize import fsolve
+from scipy.linalg import solve
 import warnings
 warnings.filterwarnings('ignore', 'The iteration is not making good progress')
 from sklearn.neighbors import KNeighborsRegressor
@@ -35,13 +36,17 @@ def function_y(lambda1, lambda2,lambda3,T,n):
 	return ls
 
 ####Integral approximation
-def integral(lambda1, lambda2,lambda3,T,n):
+def integral(lambda1, lambda2,lambda3,T= 5,n = 100):
 	#Riemann sum approxiamation left sided
 	return (1/T)*np.sum(np.sum(function_y(lambda1, lambda2,lambda3,T,n),axis = 1)*T/n )
 
 def integrals(lambda1, lambda3 = 1.65,T = 5,n = 100):
 		#Riemann sum approxiamation left sided
 		return (1/T)*np.sum(np.sum(function_y(lambda1[0], lambda1[1],lambda3,T,n),axis = 1)*T/n )
+
+def integral_3D(lambda_,T= 5,n = 100):
+	return (1/T)*np.sum(np.sum(function_y(lambda_[0], lambda_[1],lambda_[2],T,n),axis = 1)*T/n )
+
 
 ## partial derivatives
 def dy_dlambda1_t(lambda1, lambda2,lambda3,T,n):
@@ -76,6 +81,23 @@ def dy_dlambda2_t(lambda1, lambda2,lambda3,T,n):
 		ls[i] = fsolve(equations, ls[i-1])
 	return ls
 
+def dy_dlambda3_t(lambda1, lambda2,lambda3,T,n):
+	ls = np.zeros((n,2))
+	ls[0] = (1,0)
+	t = 0
+	F = function_y(lambda1, lambda2,lambda3, T,n)
+	for i in range(1,n):
+		t += T/n
+		Y = F[i]
+		def equations(vars):
+			y1,y2 = vars
+			eq1=  T/n * (2*Y[0]*Y[1]*y1 + Y[0]**2*y2 -lambda2*y1 - y1)  + ls[i-1][0] - y1
+			eq2=  T/n * (lambda2*y1 - 2*Y[0]*Y[1]*y1 - Y[0]**2*y2) + ls[i-1][1] - y2
+			return [eq1, eq2]
+		ls[i] = fsolve(equations, ls[i-1])
+	return ls
+
+
 #Gradient 
 def dQ_dlambda(lambda1, lambda2,lambda3 = 1.65,T = 5,n = 100):
 	sum1 = (1/T)*np.sum(np.sum(dy_dlambda1_t(lambda1, lambda2,lambda3,T,n),axis = 1)*T/n )
@@ -88,57 +110,102 @@ def DQ_Dlambda(Lambda,lambda3 = 1.65,T = 5,n = 100):
 	sum2 = (1/T)*np.sum(np.sum(dy_dlambda2_t(Lambda[0], Lambda[1],lambda3,T,n),axis = 1)*T/n )
 	return np.array([sum1,sum2])
 
+def DQ_Dlambda_3D(Lambda,T = 5,n = 100):
+	sum1 = (1/T)*np.sum(np.sum(dy_dlambda1_t(Lambda[0], Lambda[1],Lambda[2],T,n),axis = 1)*T/n )
+	sum2 = (1/T)*np.sum(np.sum(dy_dlambda2_t(Lambda[0], Lambda[1],Lambda[2],T,n),axis = 1)*T/n )
+	sum2 = (1/T)*np.sum(np.sum(dy_dlambda2_t(Lambda[0], Lambda[1],Lambda[2],T,n),axis = 1)*T/n )
+	return np.array([sum1,sum2])
+
+
+
+#----------------------------------------- Elliptical -----------------------------------------
+
+
+class elliptic(object):
+	def __init__(self, n):
+		self.df = []
+		self.u = []
+		self.n = n
+
+	def function_y(self, Lambda, n):
+		'''
+		'''
+		x_seq = np.arange(0,n+1)*1/n
+		A = np.zeros((n + 1, n + 1))
+		C = np.zeros(n + 1)
+
+		for i in range(n+1):
+			if i == 0:
+				A[i,0] = 1
+				C[i] = 0
+			elif i == n:
+				A[i,i] = 1
+				C[i] = 0
+			else:
+				A[i, i-1 : i +2] =  self.coefficients(Lambda,x_seq[i],n)
+				x = x_seq[i]
+				C[i] = (1 - x)*np.tanh(4*(x - Lambda[2])) + np.sin(5*np.pi*Lambda[3]*x)
+
+		# A*x = C
+		self.u = solve(A, C)
+		return self.u
+
+	def mapping_Q(self,type_ = "mean"):
+		'''
+		'''
+		if type_ == "mean":
+			return np.sum(self.u*(1/self.n))
+
+	def Gradient_Q():
+		'''
+		'''
+
+
+	def coefficients(self,Lambda, x,n):
+		'''
+		return coefficient for u(x-h), u(x), u(x+h)
+		'''
+		h = 1/n
+		a = -(2*x*np.exp(-Lambda[0]*x) - Lambda[0]*x**2*np.exp(-Lambda[0]*x) )
+		b = -(x**2*np.exp( -Lambda[0]*x ) + 0.05 )
+
+		return [ b/h**2, -((a+Lambda[1])/h - 2*b/h**2 ), (a + Lambda[1])/h + b/h**2 ]
 
 
 
 
-#----------------------------------------- Simulation Example -----------------------------------------
-
-# random sampling
-def Brusselator_Data_2_with_f(n, CONST_threshold = 3.75):
-	X = np.random.uniform(0.7, 1.5, n)
-	Y = np.random.uniform(2.75, 3.25, n)
-	integral_vec = np.vectorize(integral)
-	
-	df=pd.DataFrame(data={"X":X,"Y":Y})
-	Z = df.apply(integrals, axis = 1)
-	df['Label'] = np.zeros(n) -1
-	index = Z >= CONST_threshold
-	df['Label'][index] = 1
-	df['f'] = Z
-	return df
 
 
-def Brusselator_Data_2_with_f_POF(numPoints, CONST_a, CONST_threshold = 3.75, iniPoints = 1):
 
-	POF = POFdarts(integrals, dQ_dlambda, CONST_a, CONST_threshold)
-	POF.Generate_2D(iniPoints = iniPoints,N = numPoints - iniPoints, xlim = [0.7,1.5], ylim = [2.75,3.25])
-	
-	L = np.zeros(numPoints) - 1
-	L[np.array(POF.y) <= CONST_threshold] = 1
-	data = {
-		'X': np.array(POF.df)[:,0],
-		'Y': np.array(POF.df)[:,1],
-		'Z': np.array(POF.y),
-		'Label': L
-	}
-	df = pd.DataFrame(data)
-	return df
+
+
+
+
+
+#----------------------------------------- Data_Generation-----------------------------------------
 
 class SIP_Data(object):
-	def __init__(self, function_y, function_gradient,CONST_threshold = 3.75, xlim = [0.7,1.5], ylim = [2.75, 3.25]):
+	def __init__(self, function_y, function_gradient,CONST_threshold, dim, *domain):
+		if len(domain) != dim:
+			raise ValueError(f"Expected {dim} domain intervals, but got {len(domain)}")
+		
+		# Check if all arguments are tuples with two elements
+		for arg in domain:
+			if len(arg) != 2:
+				raise TypeError("Each domain argument must be a tuple of two numbers (low, high)")
+
 		self.CONST_threshold = CONST_threshold
-		self.xlim = xlim
-		self.ylim = ylim
+		self.dim = dim
+		self.domain = domain
 		self.function_y = function_y
 		self.function_gradient = function_gradient
 		self.df = []
 		self.Gradient = []
 
 	def generate_Uniform(self,n):
-		X = np.random.uniform(self.xlim[0], self.xlim[1], n)
-		Y = np.random.uniform(self.ylim[0], self.ylim[1], n)
-		df=pd.DataFrame(data={"X":X,"Y":Y})
+		points = np.array([np.random.uniform(low, high, n) for low, high in self.domain]).T
+
+		self.df = pd.DataFrame(ponts, columns = [f'X{i+1}' for i in range(self.dim)])
 
 		Z = df.apply(self.function_y, axis = 1)
 		self.Gradient = df.apply(self.function_gradient, axis = 1)
@@ -149,16 +216,19 @@ class SIP_Data(object):
 		self.df = df
 		
 
-	def generate_POF(self,n,CONST_a ,iniPoints = 1, max_iterations  = 1000):
+	def generate_POF(self,n,CONST_a ,iniPoints = 1, max_iterations  = 1000, sampleCriteria = 'k-dDarts'):
 		self.POFdarts = POFdarts( self.function_y, self.function_gradient , CONST_a,  self.CONST_threshold , max_iterations  = 1000 )
-		self.POFdarts.Generate_2D(iniPoints = iniPoints, N = n - iniPoints,xlim = self.xlim, ylim = self.ylim)
+		self.POFdarts.Generate_data(iniPoints, n - iniPoints, self.dim , self.domain, sampleCriteria = 'k-dDarts')
 		self.Gradient = self.POFdarts.Q
-		self.df = pd.DataFrame(data={"X":np.array(self.POFdarts.df)[:,0],"Y":np.array(self.POFdarts.df)[:,1]})
+
+		#self.df = pd.DataFrame(data={"X":np.array(self.POFdarts.df)[:,0],"Y":np.array(self.POFdarts.df)[:,1]})
+		self.df = pd.DataFrame(np.array(self.POFdarts.df), columns = [f'X{i+1}' for i in range(self.dim)])
 
 		self.df['Label'] = np.zeros(n) -1
 		index = np.array(self.POFdarts.y) >= self.CONST_threshold 
 		self.df['Label'][index] = 1
 		self.df['f'] = self.POFdarts.y
+
 
 
 
