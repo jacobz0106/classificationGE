@@ -22,13 +22,13 @@ def timeComparisonPOF(outfile, repeat = 20, N =[100,200,400,600,1000,1500], iniP
 			dataSIP_acceptreject.generate_POF(n = N[i], CONST_a = 1.5 ,iniPoints = iniPoints, sampleCriteria = 'accept-reject')
 			end_time = time.time()
 
-			matrix[j*len(N) + j,1] = end_time - start_time
+			matrix[i*len(N) + j,1] = end_time - start_time
 
 			start_time = time.time()
 			dataSIP_kdDart.generate_POF(n = N[i], CONST_a = 1.5 ,iniPoints = iniPoints, sampleCriteria = 'k-dDarts')
 			end_time = time.time()
 
-			matrix[j*len(N) + j,2] = end_time - start_time
+			matrix[i*len(N) + j,2] = end_time - start_time
 
 	df = pd.DataFrame(matrix, columns=['n','accept-reoject', 'k-dDarts'])
 	df.to_csv(outfile, index=False)
