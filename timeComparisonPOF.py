@@ -14,7 +14,8 @@ def timeComparisonPOF(outfile, repeat = 20, N =[100,200,400,600,1000,1500], iniP
 	for n, i in zip(N, range(len(N))):
 		for j in range(repeat):
 			print([n,j])
-			matrix[j*len(N) + j,0] = n
+			
+			matrix[i*len(N) + j,0] = n
 			dataSIP_acceptreject = SIP_Data(integral_3D, DQ_Dlambda_3D, 3.75, len(domains) , *domains)
 			dataSIP_kdDart = SIP_Data(integral_3D, DQ_Dlambda_3D, 3.75, len(domains) , *domains)
 
