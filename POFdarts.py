@@ -141,13 +141,13 @@ class POFdarts(object):
 				# g = [a0b0a1b2....bq]
 				g_lineSegment = np.array(args[i])
 				# remove intersections from g.
-				for diskCenter, radius in zip(self.df, self.radius):
+				for diskCenter, radius,k in zip(self.df, self.radius, range(len(self.df)) ):
 					if len(g_lineSegment) ==0:
 						break
 					minDist = np.sqrt(np.linalg.norm(diskCenter - linearDart)**2 - (linearDart[i] - diskCenter[i])**2)
 					if minDist < 0:
 						raise ValueError("distance must be non-nagetive.")
-					if minDist > radius:
+					if minDist >= radius:
 						continue
 					else: # overlap
 						# find the intersections [b_, a_]:
@@ -162,7 +162,7 @@ class POFdarts(object):
 						if b_ >= g_lineSegment[-1] or a_ <= g_lineSegment[0]:
 							continue
 						#--Case 2: [b_, a_]  lie between a_j abd b_j, split [a_j, b_j] into [a_j,b_,a_,b_j]
-						elif indexa_ == indexb_ and indexa_ != -1 :
+						elif indexa_ == indexb_ and indexa_ != -1 and (indexb_ % 2) == 0:
 							g_lineSegment = np.concatenate([ g_lineSegment[0:indexa_+1],[b_, a_], g_lineSegment[indexa_+1:] ])
 						#--Case 3: 
 						else:
@@ -188,12 +188,14 @@ class POFdarts(object):
 					total = 0
 					point_i = 0
 					for j in range( len(lengthArr)):
-						total +=  g_lineSegment[j*2 + 1]  - g_lineSegment[j*2]
+						total +=  lengthArr[j]
 						if total >= sample:
-							point_i = g_lineSegment[j*2] + sample - total
+							point_i = g_lineSegment[j*2] + sample - total +  lengthArr[j]
+							break
+
 					linearDart[i] = point_i
 					return(linearDart)
-			print('miss')
+			# print('miss')
 			totalmiss += 1
 		raise ValueError('missed 10 times.')
 
@@ -205,25 +207,25 @@ class POFdarts(object):
 
 
 def find_index(A, constant):
-    low, high = 0, len(A) - 1
+	low, high = 0, len(A) - 1
 
-    while low <= high:
-        mid = (low + high) // 2
+	while low <= high:
+		mid = (low + high) // 2
 
-        # Check if mid is the last index or if the array is not large enough
-        if mid == len(A) - 1:
-            return -1
+		# Check if mid is the last index or if the array is not large enough
+		if mid == len(A) - 1:
+			return -1
 
-        # Check if A[mid] < constant and A[mid + 1] > constant
-        if A[mid] < constant and A[mid + 1] > constant:
-            return mid
+		# Check if A[mid] < constant and A[mid + 1] > constant
+		if A[mid] < constant and A[mid + 1] > constant:
+			return mid
 
-        # Adjust search range
-        if A[mid] >= constant:
-            high = mid - 1
-        else:
-            low = mid + 1
-    return -1  # Return -1 if no index is found
+		# Adjust search range
+		if A[mid] >= constant:
+			high = mid - 1
+		else:
+			low = mid + 1
+	return -1  # Return -1 if no index is found
 
 
 
