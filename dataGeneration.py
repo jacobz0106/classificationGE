@@ -205,15 +205,14 @@ class SIP_Data(object):
 	def generate_Uniform(self,n):
 		points = np.array([np.random.uniform(low, high, n) for low, high in self.domain]).T
 
-		self.df = pd.DataFrame(ponts, columns = [f'X{i+1}' for i in range(self.dim)])
+		self.df = pd.DataFrame(points, columns = [f'X{i+1}' for i in range(self.dim)])
 
-		Z = df.apply(self.function_y, axis = 1)
-		self.Gradient = df.apply(self.function_gradient, axis = 1)
-		df['Label'] = np.zeros(n) -1
+		Z = self.df.apply(self.function_y, axis = 1)
+		self.Gradient = self.df.apply(self.function_gradient, axis = 1)
+		self.df['Label'] = np.zeros(n) -1
 		index = Z >= self.CONST_threshold 
-		df['Label'][index] = 1
-		df['f'] = Z
-		self.df = df
+		self.df['Label'][index] = 1
+		self.df['f'] = Z
 		
 
 	def generate_POF(self,n,CONST_a ,iniPoints = 1, max_iterations  = 1000, sampleCriteria = 'k-dDarts'):
