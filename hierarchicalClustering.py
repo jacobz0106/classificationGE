@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.spatial import distance
 import copy
-from CBP import CBP
+import CBP
 import matplotlib.pyplot as plt
 import math
 

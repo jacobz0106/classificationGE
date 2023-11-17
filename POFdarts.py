@@ -13,7 +13,7 @@ import random
 
 
 class POFdarts(object):
-	def __init__(self, function_y, gradient, CONST_a,  critical_value, max_iterations  = 1000, random_state = 0):
+	def __init__(self, function_y, gradient, CONST_a,  critical_value, max_iterations  = 1000, max_miss = 10,random_state = 0):
 		'''
 		function_y takes 1 argument: tuple
 		gradient takes 1 argument: tuple
@@ -23,6 +23,7 @@ class POFdarts(object):
 		self.CONST_a = CONST_a
 		self.critical_value = critical_value
 		self.max_iterations = max_iterations
+		self.max_miss = max_miss
 		self.seed = random_state
 		# data frame is a list object
 		self.df = []
@@ -51,20 +52,7 @@ class POFdarts(object):
 		return
 
 
-	def add_point(self,point):
-		Q = self.gradient(point)
-		y = self.function_y(point)
-		radius = np.abs(y - self.critical_value)/(self.CONST_a*np.linalg.norm(Q))
-		self.df.append(point)
-		self.radius.append(radius)
-		self.y.append(y)
-		self.Q.append(Q)
-		return
-
-	def Generate_data(self, iniPoints, N, dim, args, sampleCriteria = 'k-dDarts'):
-		'''
-		sample method: k-dDarts, accept-reject
-		'''
+	def Initialize(self, iniPoints,  dim, args):
 		random.seed(self.seed)
 		# Check if the domain for each dimension is provided
 		if len(args) != dim:
@@ -85,9 +73,14 @@ class POFdarts(object):
 		for i in range(iniPoints):
 			Q = self.gradient(self.df[i])
 			self.Q.append(Q)
-			self.radius[i]= np.abs(self.y[i] - self.critical_value)/(self.CONST_a*np.linalg.norm(Q) )
+			self.radius[i]= np.abs(self.y[i] - self.critical_value)/( self.CONST_a *np.linalg.norm(Q) )
 		self.radius = self.radius.tolist()
 		self.remove_overlap()
+
+	def Generate_data(self, N, dim, args, sampleCriteria = 'k-dDarts'):
+		'''
+		sample method: k-dDarts, accept-reject
+		'''
 		i = 0
 		if sampleCriteria == 'accept-reject':
 			while i < N:
@@ -111,29 +104,37 @@ class POFdarts(object):
 					self.y.append(z)
 					Q = self.gradient(newPoint)
 					self.Q.append(Q)
-					r = np.abs(z - self.critical_value)/(self.CONST_a*np.linalg.norm(Q))
+					r = np.abs(z - self.critical_value)/( self.CONST_a*np.linalg.norm(Q))
 					self.radius.append(r)
 					self.df.append(newPoint)
 					self.remove_overlap()
 					i = i+1
 		else:
 			while i < N:
-				newPoint = self.lineDartSample(dim,args).tolist()
-				z = self.function_y(np.array(newPoint))
-				self.y.append(z)
-				Q = self.gradient(newPoint)
-				self.Q.append(Q)
-				r = np.abs(z - self.critical_value)/(self.CONST_a*np.linalg.norm(Q))
-				self.radius.append(r)
-				self.df.append(newPoint)
-				self.remove_overlap()
-				i = i+1
+				newPoint = self.lineDartSample(dim,args)
+				if newPoint is None:
+					print('decrease')
+					self.CONST_a = self.CONST_a * 3/2
+					self.radius = [r * 2/3 for r in self.radius]
+				else:
+					newPoint = newPoint.tolist()
+					z = self.function_y(np.array(newPoint))
+					self.y.append(z)
+					Q = self.gradient(newPoint)
+					self.Q.append(Q)
+					r = np.abs(z - self.critical_value)/( self.CONST_a*np.linalg.norm(Q))
+					self.radius.append(r)
+					self.df.append(newPoint)
+					self.remove_overlap()
+					i = i+1
 		return
+
+
 
 
 	def lineDartSample(self, dim, args):
 		totalmiss = 0
-		while totalmiss < 10:
+		while totalmiss < self.max_miss:
 			linearDart = np.array([np.random.uniform(low, high, 1) for low, high in args]).T[0]
 			dartsDim = np.arange(len(linearDart))
 			random.shuffle(dartsDim)
@@ -197,7 +198,7 @@ class POFdarts(object):
 					return(linearDart)
 			# print('miss')
 			totalmiss += 1
-		raise ValueError('missed 10 times.')
+		return None
 
 
 
