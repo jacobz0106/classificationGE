@@ -215,15 +215,17 @@ class SIP_Data(object):
 		self.df['f'] = Z
 		
 
-	def generate_POF(self,n,CONST_a ,iniPoints = 1, max_iterations  = 1000, sampleCriteria = 'k-dDarts'):
-		self.POFdarts = POFdarts( self.function_y, self.function_gradient , CONST_a,  self.CONST_threshold , max_iterations  = 1000 )
-		self.POFdarts.Generate_data(iniPoints, n - iniPoints, self.dim , self.domain, sampleCriteria = 'k-dDarts')
+	def generate_POF(self,n,CONST_a ,iniPoints = 0, max_iterations  = 1000, sampleCriteria = 'k-dDarts', Initialization = True):
+		if Initialization == True:
+			self.POFdarts = POFdarts( self.function_y, self.function_gradient , CONST_a,  self.CONST_threshold , max_iterations  = 1000 )
+			self.POFdarts.Initialize(iniPoints, self.dim , self.domain)
+		self.POFdarts.Generate_data( n - iniPoints, self.dim , self.domain, sampleCriteria = sampleCriteria)
 		self.Gradient = self.POFdarts.Q
 
 		#self.df = pd.DataFrame(data={"X":np.array(self.POFdarts.df)[:,0],"Y":np.array(self.POFdarts.df)[:,1]})
 		self.df = pd.DataFrame(np.array(self.POFdarts.df), columns = [f'X{i+1}' for i in range(self.dim)])
 
-		self.df['Label'] = np.zeros(n) -1
+		self.df['Label'] = np.zeros( len(self.POFdarts.df) ) -1
 		index = np.array(self.POFdarts.y) >= self.CONST_threshold 
 		self.df['Label'][index] = 1
 		self.df['f'] = self.POFdarts.y
