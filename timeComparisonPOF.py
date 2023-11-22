@@ -36,7 +36,7 @@ def timeComparisonPOF(outfile, repeat = 20, N =[100,200,400,600,1000,1500], iniP
 	df.to_csv(outfile, index=False)
 
 def main():
-	timeComparisonPOF(outfile = 'Results/timeComparisonPofAcceptReject02.py',repeat = 20, N =[100,200,300], iniPoints = 10)
+	timeComparisonPOF(outfile = 'Results/timeComparisonPofAcceptReject.py',repeat = 20, N =[100,200,300,400,500,600,700,800], iniPoints = 10)
 
 
 
