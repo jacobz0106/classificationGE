@@ -41,7 +41,7 @@ class hierarchicalClustering(object):
 		def Gabriel_neighbors(indexi):
 			inCluster = np.repeat(-1, self.n )
 			inCluster[indexi] = 1
-			Ge_model = CBP(self.dTrain,inCluster, Euc_d  = self.distMatrix)
+			Ge_model = CBP.CBP(self.dTrain,inCluster, Euc_d  = self.distMatrix)
 			Gabriel_neighbors = np.array(Ge_model.points)[:,1]
 			isGabrielNeighbors = np.repeat(0, self.n)
 			isGabrielNeighbors[Gabriel_neighbors ] = 1

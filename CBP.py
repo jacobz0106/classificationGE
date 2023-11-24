@@ -1,34 +1,18 @@
-import os
-import sys
+#import os
+#import sys
 import numpy as np
 import pandas as pd
-# from scipy.special import logsumexp
-# from collections import Counter
 import random
-# import pdb
-# import math
-# import itertools
-# from itertools import product
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.model_selection import train_test_split
-# from scipy import interpolate
-# from statsmodels.nonparametric.smoothers_lowess import lowess
-# from scipy.optimize import fmin_cobyla,fsolve
-# from scipy.interpolate import BSpline, LinearNDInterpolator
-# from sklearn import datasets
-# from scipy import optimize 
-# from mpl_toolkits.mplot3d import Axes3D
-# from sklearn.decomposition import PCA
+#from sklearn.model_selection import train_test_split
 import warnings
 warnings.simplefilter('ignore', np.RankWarning)
-# from sklearn.gaussian_process import GaussianProcessRegressor
-# from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
-# import pyearth
-# from skpp import ProjectionPursuitRegressor
+
 from sklearn import cluster
 from sklearn import svm
 from PSVM import MagKmeans
+import hierarchicalClustering
 # from sklearn.base import BaseEstimator, ClassifierMixin
 
 class LabelEncode(object):
@@ -68,13 +52,16 @@ class CBP(object):
   Characteristic Boundary Points(CBP) for a training data set.
   Contains a list of (i,j) indexing points
   '''
-  def __init__(self, A_train, C_train):
+  def __init__(self, A_train, C_train, Euc_d = None):
 
     self.count = 0
     #pairs of CBP points 
     self.points = []
     self.midpoints = []
-    self.Euc_d = np.zeros(shape=(0,0))
+    if Euc_d is None:
+      self._Euc(A_train, C_train)
+    else:
+      self.Euc_d = Euc_d
 
     self.transformer = LabelEncode([0,1])
     self.transformer.fit(C_train)
@@ -89,7 +76,6 @@ class CBP(object):
     '''
     self.points = []
     self.midpoints = []
-    self._Euc(A_train, C_train)
     for i in np.where(np.array(C_train) == 1)[0]:
       pointSet = np.where(np.array(C_train) == 0)[0]
       for j in pointSet:
@@ -207,13 +193,15 @@ class refrenced_method(object):
 
 
 class GPSVM(object):
-  def __init__(self,clusterNum = 1,ensembleNum=1,C = 0.1):
+  def __init__(self,clusterNum = 1,ensembleNum=1,C = 0.1, CONST_C = 1,method = 'hierarchicalClustering'):
     self.cbp = []
     self.clusterNum = clusterNum
+    self.method = method
     self.clusterCentroids = []
     self.ensembleNum = ensembleNum
     self.C = C 
-    self.kmeans = []
+    self.CONST_C = CONST_C
+    self.clusters = []
     self.SVM = []
 
 
@@ -237,22 +225,39 @@ class GPSVM(object):
     self.clusterLabel = []
 
 
-  def fit(self, A_train, C_train):
+  def fit(self, A_train, C_train, dQ = None):
+    '''
+    cluster = hierarchicalClustering or Kmeans
+    '''
     self._train(A_train, C_train)
 
     if self.cbp.count < self.clusterNum:
       self.clusterNum = self.cbp.count
-    self.kmeans = cluster.KMeans(n_clusters=self.clusterNum,n_init = 10 , random_state=0)
-    self.kmeans.fit(np.array(self.cbp.midpoints))
-    self.clusterCentroids = self.kmeans.cluster_centers_
-    self.clusterLabel= np.unique(self.kmeans.labels_)
+    if self.method == 'hierarchicalClustering':
+      self.clusters = hierarchicalClustering.hierarchicalClustering(n_clusters=self.clusterNum, CONST_C = self.CONST_C, random_state=0)
+      
+
+      # take gradient as the average of the Gabriel neighbors
+
+      Gradient_i = np.array(dQ)[np.array(self.cbp.points)[:,0] ]
+      Gradient_i_norm = np.array( [ i /np.linalg.norm(i) for i in Gradient_i   ] )
+
+      Gradient_j = np.array(dQ)[np.array(self.cbp.points)[:,1] ]
+      Gradient_j_norm = np.array( [ i /np.linalg.norm(i) for i in Gradient_j   ] )
+      estimated_Gradient =   (Gradient_i_norm   +   Gradient_j_norm)/2
+      self.clusters.fit(np.array(self.cbp.midpoints), estimated_Gradient) 
+    else:
+      self.clusters = cluster.KMeans(n_clusters = self.clusterNum)
+      self.clusters.fit(np.array(self.cbp.midpoints))
+    self.clusterCentroids = self.clusters.cluster_centers_
+    self.clusterLabel= np.unique(self.clusters.labels_)
     # check if all clusters are generated
-    if self.clusterNum > len(np.unique(self.kmeans.labels_)):
-      self.clusterNum = len(np.unique(self.kmeans.labels_))
+    if self.clusterNum > len(np.unique(self.clusters.labels_)):
+      self.clusterNum = len(np.unique(self.clusters.labels_))
     if self.ensembleNum > self.clusterNum:
       self.ensembleNum = self.clusterNum
     for i in range(self.clusterNum):
-      midpoints_subset_index = self.kmeans.labels_ == self.clusterLabel[i]
+      midpoints_subset_index = self.clusters.labels_ == self.clusterLabel[i]
       Gabriel_pairs = np.array(self.cbp.points)[midpoints_subset_index]
       subset_index = Gabriel_pairs.reshape(-1)
       model = svm.SVC(kernel='linear', C = self.C)
