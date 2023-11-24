@@ -84,14 +84,12 @@ class POFdarts(object):
 		i = 0
 		if sampleCriteria == 'accept-reject':
 			while i < N:
-				newPoint = self.lineDartSample(dim,args).tolist()
-				#newPoint = np.array([np.random.uniform(low, high, 1) for low, high in args]).T.tolist()[0]
+				newPoint = np.array([np.random.uniform(low, high, 1) for low, high in args]).T.tolist()[0]
 
 				counter = 0
 
 				while self.contain(newPoint) and counter < self.max_iterations:
-					newPoint = self.lineDartSample(dim,args).tolist()
-					#newPoint = np.array([np.random.uniform(low, high, 1) for low, high in args]).T.tolist()[0]
+					newPoint = np.array([np.random.uniform(low, high, 1) for low, high in args]).T.tolist()[0]
 					counter = counter + 1
 				# no points found to add
 				if counter == self.max_iterations:
@@ -127,6 +125,7 @@ class POFdarts(object):
 					self.df.append(newPoint)
 					self.remove_overlap()
 					i = i+1
+					print(i)
 		return
 
 
