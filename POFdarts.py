@@ -125,7 +125,6 @@ class POFdarts(object):
 					self.df.append(newPoint)
 					self.remove_overlap()
 					i = i+1
-					print(i)
 		return
 
 
