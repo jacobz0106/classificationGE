@@ -5,6 +5,7 @@ from CBP import CBP
 from sklearn.preprocessing import StandardScaler
 from sklearn import cluster
 import cvxpy as cp
+import gurobipy as gurobi
 
 
 
