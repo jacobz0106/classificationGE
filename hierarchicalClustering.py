@@ -91,7 +91,6 @@ class hierarchicalClustering(object):
 		merge the cluster with smallest difference in Intra-cluster distance + gradients
 
 		'''
-		print(self.currentNumClusters)
 		if self.verbose == True:
 			print(self.currentNumClusters)
 		if self.currentNumClusters <= self.n_clusters:

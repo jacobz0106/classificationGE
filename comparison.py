@@ -1,5 +1,5 @@
 import numpy as np
-from dataGeneration import create_binary_class_boundary_spiral
+from dataGeneration import *
 import matplotlib.pyplot as plt
 from CBP import PSVM, GPSVM, LSVM
 from sklearn.model_selection import train_test_split
@@ -18,13 +18,18 @@ def Running_time(N,outfile,outfileTotal,repeat = 20):
 		for j in range(repeat):
 			print([n,j])
 			# initialize data set from spiral example
-			df = create_binary_class_boundary_spiral(n)
-			scaler = StandardScaler()
+			# df = create_binary_class_boundary_spiral(n)
+			# scaler = StandardScaler()
 
-			dfTrain  = scaler.fit_transform(df[['X','Y']].values)
+			# dfTrain  = scaler.fit_transform(df[['X','Y']].values)
 
+			domains = [[0.7,1.5], [2.75,3.25], [0,2]]
+			dataSIP = SIP_Data(integral_3D, DQ_Dlambda_3D, 3.75, len(domains) , *domains)
+			dataSIP.generate_POF(n = n, CONST_a = 1.5 ,iniPoints = 10, sampleCriteria = 'k-dDarts')
 
-			Label = df['Label'].values
+			Label = dataSIP.df['Label'].values
+			dfTrain = dataSIP.df[['X1','X2','X3']].values
+			dQ = dataSIP.POFdarts.Q
 
 			args_LSVM = [20,0.5]
 			args_PSVM = [20, 1, 5, 0.5]
@@ -45,7 +50,8 @@ def Running_time(N,outfile,outfileTotal,repeat = 20):
 			predict_end_time = time.time()
 
 			train_elapsed_time_LSVM = train_end_time - start_time
-			predict_elapsed_time_LSVM = predict_end_time - start_time
+			predict_elapsed_time_LSVM = predict_end_time - train_end_time
+
 
 			# ------ PSVM 
 			start_time = time.time()
@@ -54,15 +60,17 @@ def Running_time(N,outfile,outfileTotal,repeat = 20):
 			# Record the end time for PSVM
 			train_end_time = time.time()
 			PSVM_model.predict(dfTrain)
+			predict_end_time = time.time()
 
 			train_elapsed_time_PSVM = train_end_time - start_time
-			predict_elapsed_time_PSVM = predict_end_time - start_time
-			predict_end_time = time.time()
+			predict_elapsed_time_PSVM = predict_end_time - train_end_time
+
 
 
 			# ------ GPSVM 
 			start_time = time.time()
-			GPSVM_model = GPSVM(clusterNum = args_GPSVM[0],ensembleNum=args_GPSVM[1],C = args_GPSVM[2])
+			GPSVM_model = GPSVM(clusterNum = args_GPSVM[0],ensembleNum=args_GPSVM[1],C = args_GPSVM[2], method = 'Kmeans')
+
 			GPSVM_model.fit(dfTrain,Label)
 			# Record the end time for GPSVM
 			train_end_time = time.time()
@@ -70,7 +78,25 @@ def Running_time(N,outfile,outfileTotal,repeat = 20):
 			predict_end_time = time.time()
 
 			train_elapsed_time_GPSVM = train_end_time - start_time
-			predict_elapsed_time_GPSVM = predict_end_time - start_time
+			predict_elapsed_time_GPSVM = predict_end_time - train_end_time
+
+
+			# ------ GPSVM with hirachical clustering
+			start_time = time.time()
+			GPSVM_model = GPSVM(clusterNum = args_GPSVM[0],ensembleNum=args_GPSVM[1],C = args_GPSVM[2], method = 'hierarchicalClustering')
+
+			GPSVM_model.fit(dfTrain,Label,dQ)
+			# Record the end time for GPSVM
+			train_end_time = time.time()
+
+			GPSVM_model.predict(dfTrain)
+			predict_end_time = time.time()
+
+			train_elapsed_time_GPSVM_H = train_end_time - start_time
+			predict_elapsed_time_GPSVM_H = predict_end_time - train_end_time
+
+
+
 
 			matrix[j*3,i] = train_elapsed_time_LSVM
 			matrix[j*3 + 1,i] = train_elapsed_time_PSVM
@@ -113,7 +139,7 @@ def Running_time(N,outfile,outfileTotal,repeat = 20):
 
 
 def main():
-	Running_time(N = [100,200,300,500,800,1000,1500,2000], outfile = 'Results/running_time.csv', outfileTotal = 'Results/running_time_total.csv')
+	Running_time(N = [100,200,300,500,600,800,1000,1500], outfile = 'Results/running_time.csv', outfileTotal = 'Results/running_time_total.csv')
 	return
 
 

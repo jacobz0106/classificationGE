@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 import random
+import time
 import cvxpy as cp
 from scipy.spatial import distance
 import copy
@@ -138,11 +139,12 @@ class MagKmeans(object):
 		# Get the optimized cluster memberships
 		Z_optimal = Z.value
 		if optimal_solution_found:
+			print('solved')
 			self.clusterMembership = copy.deepcopy(convert_to_binary(Z_optimal))
 		else:
-			raise Exception("Optimization problem not solved optimally.")
-			# print("Optimization problem not solved optimally.")
-			# self.clusterMembership = copy.deepcopy(convert_to_binary(Z_optimal))
+			#raise Exception("Optimization problem not solved optimally.")
+			print("Optimization problem not solved optimally.")
+			self.clusterMembership = copy.deepcopy(convert_to_binary(Z_optimal))
 		
 
 	def update_cluster_centroids(self):
