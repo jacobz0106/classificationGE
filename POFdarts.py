@@ -13,7 +13,7 @@ import random
 
 
 class POFdarts(object):
-	def __init__(self, function_y, gradient, CONST_a,  critical_value, max_iterations  = 1000, max_miss = 10,random_state = 0):
+	def __init__(self, function_y, gradient, CONST_a,  critical_value, max_iterations  = 50000, max_miss = 10000,random_state = 0):
 		'''
 		function_y takes 1 argument: tuple
 		gradient takes 1 argument: tuple
