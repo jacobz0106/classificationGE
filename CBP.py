@@ -193,7 +193,8 @@ class refrenced_method(object):
 
 
 class GPSVM(object):
-  def __init__(self,clusterNum = 1,ensembleNum=1,C = 0.1, CONST_C = 1,method = 'hierarchicalClustering'):
+  def __init__(self, method, clusterNum = 1,ensembleNum=1,C = 0.1, CONST_C = 1):
+
     self.cbp = []
     self.clusterNum = clusterNum
     self.method = method
@@ -230,10 +231,9 @@ class GPSVM(object):
     cluster = hierarchicalClustering or Kmeans
     '''
     self._train(A_train, C_train)
-
     if self.cbp.count < self.clusterNum:
       self.clusterNum = self.cbp.count
-    if self.method == 'hierarchicalClustering':
+    if self.method == "hierarchicalClustering":
       self.clusters = hierarchicalClustering.hierarchicalClustering(n_clusters=self.clusterNum, CONST_C = self.CONST_C, random_state=0)
       
 
@@ -247,7 +247,7 @@ class GPSVM(object):
       estimated_Gradient =   (Gradient_i_norm   +   Gradient_j_norm)/2
       self.clusters.fit(np.array(self.cbp.midpoints), estimated_Gradient) 
     else:
-      self.clusters = cluster.KMeans(n_clusters = self.clusterNum)
+      self.clusters = cluster.KMeans(n_clusters = self.clusterNum, n_init = 'auto')
       self.clusters.fit(np.array(self.cbp.midpoints))
     self.clusterCentroids = self.clusters.cluster_centers_
     self.clusterLabel= np.unique(self.clusters.labels_)
@@ -286,7 +286,8 @@ class GPSVM(object):
   def get_params(self,deep=True):
       return {"clusterNum" : self.clusterNum,
       "ensembleNum" : self.ensembleNum,
-      "C": self.C}
+      "C": self.C,
+      "method": self.method}
 
   def set_params(self, **parameters):
       for parameter, value in parameters.items():
@@ -329,7 +330,8 @@ class LSVM(object):
 
   def get_params(self,deep=True):
       return {"K" : self.K,
-      "C" : self.C}
+      "C" : self.C
+      }
 
   def set_params(self, **parameters):
       for parameter, value in parameters.items():
@@ -361,7 +363,7 @@ class SVM_Single(object):
 
 
 class PSVM(object):
-  def __init__(self,clusterNum = 1,ensembleNum=1,C = 0.1, R = 0.5, max_iterations =  500):
+  def __init__(self,clusterNum = 1,ensembleNum=1,C = 0.1, R = 0.5, max_iterations =  5000):
     '''
     fir args = [cluster number, ensemble number,  C, R]
     '''
