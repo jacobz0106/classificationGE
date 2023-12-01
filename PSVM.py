@@ -11,7 +11,7 @@ from sklearn.preprocessing import StandardScaler
 from dataGeneration import *
 import scipy.stats as stats
 from matplotlib import cm
-
+from gurobipy import Model, GRB, quicksum
 
 
 
@@ -74,7 +74,7 @@ def convert_to_binary(Z):
 # Class MagKmeans implementation adapted from the paper's pseudocode.
 # Linear program is solved with cvxpy package.
 class MagKmeans(object):
-	def __init__(self, n_clusters, max_iterations  = 4000, random_state = 0):
+	def __init__(self, n_clusters, max_iterations  = 10000, random_state = 0):
 		#cluster membership matrix
 		self.clusterMembership = []
 		self.K = n_clusters
@@ -106,7 +106,6 @@ class MagKmeans(object):
 		Z = cp.Variable((n, K))
 
 		# Define the optimization objective
-		#objective = cp.Minimize(cp.norm(X - Z @ C, 'fro') + cp.sum(cp.abs(self.R *  cp.matmul(np.matrix(Y), Z)  )))
 		objective = cp.Minimize(cp.sum(cp.norm(X - Z @ C, axis = 1)) + cp.sum(cp.abs(self.R *  cp.matmul(np.matrix(Y), Z)  )))
 
 
@@ -118,28 +117,84 @@ class MagKmeans(object):
 		problem = cp.Problem(objective, constraints)
 
 		# List of solvers to try
-		solvers = [ "ECOS", "SCS", "GUROBI"]
+		solvers = [ "GUROBI", "ECOS", "SCS"]
 
 		optimal_solution_found = False
 
 		# Iterate through the solvers
 		for solver in solvers:
-		    try:
-		        # Solve the LP problem using the current solver
-		        problem.solve(solver=solver)
+			if solver == "GUROBI":
 
-		        # Check if the solver found an optimal solution
-		        if problem.status == cp.OPTIMAL:
-		            optimal_solution_found = True
-		            break
-		        else:
-		            print(f"Solver {solver} did not find an optimal solution.")
-		    except Exception as e:
-		        print(f"Solver {solver} encountered an error: {e}")
+				# Create a new Gurobi model
+				m = Model("optimization")
+
+				# Create binary variables for cluster membership
+				Z = m.addVars(n, K, vtype=GRB.BINARY, name="Z")
+				#Z = m.addVars(n, K, lb=0, ub=1, name="Z")
+				
+
+				# Squared differences part
+				objective_norm_part = quicksum((X[i, j] - quicksum(Z[i, k] * C[k, j] for k in range(K)))**2 
+											   for i in range(n) for j in range(d))
+
+				# Initialize the absolute value part of the objective
+				objective_abs_part = 0
+
+				# Calculate absolute values part - this needs to be linearized
+				for i in range(n):
+					for k in range(K):
+						abs_expr = self.R * Y[i] * Z[i, k]
+						# Linearize the absolute value (requires introducing new variables)
+						pos = m.addVar()
+						neg = m.addVar()
+						m.addConstr(pos >= abs_expr)
+						m.addConstr(neg >= -abs_expr)
+						objective_abs_part += pos + neg
+
+				# Total objective
+				objective = objective_norm_part + objective_abs_part
+
+				# Set the objective in the model
+				m.setObjective(objective, GRB.MINIMIZE)
+
+
+				# Define constraints
+				for i in range(n):
+					m.addConstr(quicksum(Z[i, k] for k in range(K)) == 1)  # Each data point belongs to exactly one cluster
+
+				m.setParam('OutputFlag', 0)
+				# Optimize model
+				m.optimize()
+
+				# Retrieve the solution
+				solution = np.zeros((n, K))
+				if m.status == GRB.OPTIMAL:
+					for i in range(n):
+						for k in range(K):
+							solution[i, k] = Z[i, k].X
+					Z_optimal = solution
+					optimal_solution_found = True
+					break
+				else:
+					print("No optimal solution found.")
+
+			else:#use cvxpy to solve
+				try:
+					# Solve the LP problem using the current solver
+					problem.solve(solver=solver)
+
+					# Check if the solver found an optimal solution
+					if problem.status == cp.OPTIMAL:
+						Z_optimal = Z.value
+						optimal_solution_found = True
+						break
+					else:
+						print(f"Solver {solver} did not find an optimal solution.")
+				except Exception as e:
+					print(f"Solver {solver} encountered an error: {e}")
 		# Get the optimized cluster memberships
-		Z_optimal = Z.value
+		# Z_optimal = Z.value
 		if optimal_solution_found:
-			print('solved')
 			self.clusterMembership = copy.deepcopy(convert_to_binary(Z_optimal))
 		else:
 			#raise Exception("Optimization problem not solved optimally.")
@@ -277,7 +332,7 @@ class MagKmeans(object):
 
 def main():
 	# Generate a synthetic 2D dataset with continuous variables
-	df = create_binary_class_boundary_spiral(500)
+	df = create_binary_class_boundary_concave(500)
 	# Fit K-Means to the data with two clusters
 	Mag_Kmeans = MagKmeans(n_clusters = 10, random_state=0)
 
@@ -324,6 +379,7 @@ def main():
 
 	#plt.scatter(df[:, 0], df[:, 1], c=predicted_labels, cmap='rainbow')
 	ax.scatter(centroids[:, 0], centroids[:, 1], marker='x', s=200, c='red', label='Centroids')
+	print(Mag_Kmeans.K)
 	ax.set_title('K-Means Clustering with Discretized 2D Data')
 	#ax.set_xlim(-1,11)
 	#ax.set_ylim(-1,11)
