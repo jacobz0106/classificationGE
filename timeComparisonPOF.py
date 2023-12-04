@@ -21,13 +21,13 @@ def timeComparisonPOF(outfile, repeat = 20, N =[100,200,400,600,1000,1500], iniP
 			dataSIP_kdDart = SIP_Data(integral_3D, DQ_Dlambda_3D, 3.75, len(domains) , *domains)
 
 			start_time = time.time()
-			dataSIP_acceptreject.generate_POF(n = N[i], CONST_a = 1.5 ,iniPoints = iniPoints, sampleCriteria = 'accept-reject')
+			dataSIP_acceptreject.generate_POF(n = N[i], CONST_a = 1.5 ,iniPoints = iniPoints, sampleCriteria = 'accept-reject', max_iterations = 50000)
 			end_time = time.time()
 
 			matrix[i*repeat + j,1] = end_time - start_time
 
 			start_time = time.time()
-			dataSIP_kdDart.generate_POF(n = N[i], CONST_a = 1.5 ,iniPoints = iniPoints, sampleCriteria = 'k-dDarts')
+			dataSIP_kdDart.generate_POF(n = N[i], CONST_a = 1.5 ,iniPoints = iniPoints, sampleCriteria = 'k-dDarts', max_miss = 50000)
 			end_time = time.time()
 
 			matrix[i*repeat + j,2] = end_time - start_time
