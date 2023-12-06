@@ -74,7 +74,7 @@ def convert_to_binary(Z):
 # Class MagKmeans implementation adapted from the paper's pseudocode.
 # Linear program is solved with cvxpy package.
 class MagKmeans(object):
-	def __init__(self, n_clusters, max_iterations  = 10000, random_state = 0):
+	def __init__(self, n_clusters, max_iterations  = 500, random_state = 0):
 		#cluster membership matrix
 		self.clusterMembership = []
 		self.K = n_clusters
@@ -129,8 +129,8 @@ class MagKmeans(object):
 				m = Model("optimization")
 
 				# Create binary variables for cluster membership
-				Z = m.addVars(n, K, vtype=GRB.BINARY, name="Z")
-				#Z = m.addVars(n, K, lb=0, ub=1, name="Z")
+				#Z = m.addVars(n, K, vtype=GRB.BINARY, name="Z")
+				Z = m.addVars(n, K, lb=0, ub=1, name="Z")
 				
 
 				# Squared differences part
@@ -312,6 +312,7 @@ class MagKmeans(object):
 					stationary_state = True
 					break # terminate if centroids didn't change
 				iteration += 1
+				print(iteration)
 			if iteration == self.max_iterations:
 				print("Termination criteria not met. Consider increasing max_iterations. Reinitialization...")
 				self.K = self.constK
@@ -332,7 +333,7 @@ class MagKmeans(object):
 
 def main():
 	# Generate a synthetic 2D dataset with continuous variables
-	df = create_binary_class_boundary_concave(500)
+	df = create_binary_class_boundary_spiral(500)
 	# Fit K-Means to the data with two clusters
 	Mag_Kmeans = MagKmeans(n_clusters = 10, random_state=0)
 

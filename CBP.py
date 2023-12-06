@@ -363,7 +363,7 @@ class SVM_Single(object):
 
 
 class PSVM(object):
-  def __init__(self,clusterNum = 1,ensembleNum=1,C = 0.1, R = 0.5, max_iterations =  5000):
+  def __init__(self,clusterNum = 1,ensembleNum=1,C = 0.1, R = 0.5, max_iterations =  500):
     '''
     fir args = [cluster number, ensemble number,  C, R]
     '''
@@ -420,9 +420,10 @@ class PSVM(object):
     I = Euclidean_distance_vector(x,self.clusterCentroids)
     index = I.argsort()[0:self.ensembleNum]
     classifier = 0.0
+    sum_ = np.sum(1/I[index])
     for i in range(len(index)):
       j = index[i]
-      weight = 1/I[index[i]]/(np.sum(1/I[index]))
+      weight = (1/I[index[i]])/sum_
       classifier = classifier + weight*self.SVM[j].predict([x])
     if classifier >= 0:
       return 1

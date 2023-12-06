@@ -2,7 +2,7 @@ from sklearn.model_selection import GridSearchCV, cross_val_score
 from sklearn.model_selection import train_test_split
 import pandas as pd
 import numpy as np
-from dataGeneration import Brusselator_Data_2_with_f
+from dataGeneration import *
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
@@ -73,11 +73,19 @@ param_grid_PSVM = {
 	'R':[0, 0.1,0.5,1,5,10],            
 }
 
-## - GPSVM:
-param_grid_GPSVM = {
+## - GPSVM : 
+param_grid_GPSVM_Kmeans = {
+	'method' : ["KMeans"], 
 	'clusterNum':  [ 5,10,15,20],        
 	'ensembleNum': [1, 5, 10], 
-	'C':[0.1,0.5,1,5,10],           
+	'C':[0.1,0.5,1,5,10],      
+}
+
+param_grid_GPSVM_Hier = {
+	'clusterNum':  [ 5,10,15,20],        
+	'ensembleNum': [1, 5, 10], 
+	'C':[0.1,0.5,1,5,10], 
+	'method' : ["hierarchicalClustering"],      
 }
 
 
@@ -100,10 +108,8 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5):
 	"""
 	# Create a GridSearchCV object
 	grid_search = GridSearchCV(model, param_grid, cv=cv, scoring='accuracy')
-
 	# Fit the grid search to the data
 	grid_search.fit(X, y)
-
 	# Get the best model with tuned hyperparameters
 	best_model = grid_search.best_estimator_
 
@@ -117,24 +123,38 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5):
 
 
 
-def Accuracy_comparison_CV(dataGeneration, n ,testSize = 1000, repeat = 20):
+def Accuracy_comparison_CV(n , repeat = 20):
 
-	Classifier = [refrenced_method(), LSVM(), GPSVM(), PSVM(), RandomForestClassifier(), MLPClassifier(), XGBClassifier(use_label_encoder=False, eval_metric = 'logloss'), SVC()]
+	Classifier = [refrenced_method(), LSVM(), GPSVM(method = "KMeans"),GPSVM(method = 'hierarchicalClustering'), PSVM(), RandomForestClassifier(), MLPClassifier(), XGBClassifier(use_label_encoder=False, eval_metric = 'logloss'), SVC()]
 	#paras = [param_grid_rf, param_grid_MLP, param_grid_xgb, param_grid_SVM, param_grid_pujol, param_grid_LSVM, param_grid_PSVM , param_grid_GPSVM]
-	paras = [param_grid_pujol, param_grid_LSVM, param_grid_GPSVM , param_grid_PSVM, param_grid_rf, param_grid_MLP, param_grid_xgb, param_grid_SVM]
+	paras = [param_grid_pujol, param_grid_LSVM, param_grid_GPSVM_Kmeans, param_grid_GPSVM_Hier,  param_grid_PSVM, param_grid_rf, param_grid_MLP, param_grid_xgb, param_grid_SVM]
 	
 
 	accuracyMatrixTrain = np.zeros( shape = (repeat, len(Classifier)) )
 	accuracyMatrixPrediction = np.zeros( shape = (repeat, len(Classifier)) )
 	for i in range(repeat):
 		print('Epoch ',i,'--------------------------------------')
-		Train = dataGeneration(n)
-		Test = dataGeneration(testSize)
-		X_train = Train[['X','Y']].values
-		y_train = Train['Label'].values
+		domains = [[0.7,1.5], [2.75,3.25], [0,2]]
+		dataSIP = SIP_Data(integral_3D, DQ_Dlambda_3D, 3.75, len(domains) , *domains)
+		dataSIP.generate_POF(n = n, CONST_a = 1.5 ,iniPoints = 10, sampleCriteria = 'k-dDarts')
 
-		X_test = Test[['X','Y']].values
-		y_test = Test['Label'].values
+
+
+		Label = dataSIP.df['Label'].values
+		dfTrain = dataSIP.df[['X1','X2','X3']].values
+
+		# Generating indices
+		indices = np.arange(len(Label))
+		train_indices, test_indices = train_test_split(indices, test_size=0.25, random_state=42)
+
+
+		dQ = np.array(dataSIP.POFdarts.Q)[train_indices].tolist()
+
+		X_train = dfTrain[train_indices,:]
+		y_train = Label[train_indices]
+
+		X_test = dfTrain[test_indices,:]
+		y_test = Label[test_indices]
 		for model, para, k in zip(Classifier, paras, range(len(Classifier))):
 			print('Tunning model:',str(model))
 			print('with parameters:', para)
@@ -150,9 +170,33 @@ def Accuracy_comparison_CV(dataGeneration, n ,testSize = 1000, repeat = 20):
 				accuracyMatrixTrain[i, k] =  trainAccuracy
 				accuracyMatrixPrediction[i, k] = predictionAccuracy
 				print(n,'training samples, best model has train accuracy:',trainAccuracy, ' prediction accuracy:', predictionAccuracy, '\n')
+			elif isinstance(model, GPSVM):
+				if model.method == "hierarchicalClustering":
+					# Create a GridSearchCV object
+					fit_para = {'dQ':dQ}
+					grid_search = GridSearchCV(model, para, cv=5, scoring='accuracy')
+
+					# Fit the grid search to the data
+					grid_search.fit(X_train, y_train, **fit_para)
+
+					# Get the best model with tuned hyperparameters
+					best_model = grid_search.best_estimator_
+
+					trainAccuracy = np.sum(best_model.predict(X_train) == y_train)/len(y_train)
+					predictionAccuracy = np.sum(best_model.predict(X_test) == y_test)/len(y_test)
+					accuracyMatrixTrain[i, k] =  trainAccuracy
+					accuracyMatrixPrediction[i, k] = predictionAccuracy
+					print(n,'training samples, best model has train accuracy:',trainAccuracy, ' prediction accuracy:', predictionAccuracy, '\n')
+				else:
+					model = GPSVM(method = "KMeans")
+					best_model = perform_grid_search_cv(model, para, X_train,y_train)
+					trainAccuracy = np.sum(best_model.predict(X_train) == y_train)/len(y_train)
+					predictionAccuracy = np.sum(best_model.predict(X_test) == y_test)/len(y_test)
+					accuracyMatrixTrain[i, k] =  trainAccuracy
+					accuracyMatrixPrediction[i, k] = predictionAccuracy
+					print(n,'training samples, best model has train accuracy:',trainAccuracy, ' prediction accuracy:', predictionAccuracy, '\n')
 			else:
 				best_model = perform_grid_search_cv(model, para, X_train,y_train)
-				
 				trainAccuracy = np.sum(best_model.predict(X_train) == y_train)/len(y_train)
 				predictionAccuracy = np.sum(best_model.predict(X_test) == y_test)/len(y_test)
 				accuracyMatrixTrain[i, k] =  trainAccuracy
@@ -162,9 +206,9 @@ def Accuracy_comparison_CV(dataGeneration, n ,testSize = 1000, repeat = 20):
 
 
 def main():
-	accuracyTrain, accuracyPrediction = Accuracy_comparison_CV(Brusselator_Data_2_with_f, 100)
-	np.savetxt('Train_accuracy_brusselator_200.csv', accuracyTrain, delimiter=",", header = '' )
-	np.savetxt("Prediction_accuracy_brusselator_200", accuracyPrediction, delimiter=",", header = '' )
+	accuracyTrain, accuracyPrediction = Accuracy_comparison_CV(100)
+	np.savetxt('Results/CVresults/Train_accuracy_brusselator_100.csv', accuracyTrain, delimiter=",", header = '' )
+	np.savetxt("Results/CVresults/Prediction_accuracy_brusselator_100", accuracyPrediction, delimiter=",", header = '' )
 
 
 
