@@ -123,7 +123,7 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5):
 
 
 
-def Accuracy_comparison_CV(n , repeat = 20):
+def Accuracy_comparison_CV(n , nTest, repeat = 20):
 
 	Classifier = [refrenced_method(), LSVM(), GPSVM(method = "KMeans"),GPSVM(method = 'hierarchicalClustering'), PSVM(), RandomForestClassifier(), MLPClassifier(), XGBClassifier(use_label_encoder=False, eval_metric = 'logloss'), SVC()]
 	#paras = [param_grid_rf, param_grid_MLP, param_grid_xgb, param_grid_SVM, param_grid_pujol, param_grid_LSVM, param_grid_PSVM , param_grid_GPSVM]
@@ -143,18 +143,20 @@ def Accuracy_comparison_CV(n , repeat = 20):
 		Label = dataSIP.df['Label'].values
 		dfTrain = dataSIP.df[['X1','X2','X3']].values
 
-		# Generating indices
-		indices = np.arange(len(Label))
-		train_indices, test_indices = train_test_split(indices, test_size=0.25, random_state=42)
+		# # Generating indices
+		# indices = np.arange(len(Label))
+		# train_indices, test_indices = train_test_split(indices, test_size=0.25, random_state=42)
 
 
-		dQ = np.array(dataSIP.POFdarts.Q)[train_indices].tolist()
+		dQ = dataSIP.POFdarts.Q
 
-		X_train = dfTrain[train_indices,:]
-		y_train = Label[train_indices]
+		X_train = dfTrain
+		y_train = Label
 
-		X_test = dfTrain[test_indices,:]
-		y_test = Label[test_indices]
+		dataSIP.generate_Uniform(nTest)
+
+		X_test = dataSIP.df[['X1','X2','X3']].values
+		y_test = dataSIP.df['Label'].values
 		for model, para, k in zip(Classifier, paras, range(len(Classifier))):
 			print('Tunning model:',str(model))
 			print('with parameters:', para)
@@ -206,7 +208,7 @@ def Accuracy_comparison_CV(n , repeat = 20):
 
 
 def main():
-	accuracyTrain, accuracyPrediction = Accuracy_comparison_CV(100)
+	accuracyTrain, accuracyPrediction = Accuracy_comparison_CV(100, 500)
 	np.savetxt('Results/CVresults/Train_accuracy_brusselator_100.csv', accuracyTrain, delimiter=",", header = '' )
 	np.savetxt("Results/CVresults/Prediction_accuracy_brusselator_100", accuracyPrediction, delimiter=",", header = '' )
 
