@@ -31,12 +31,13 @@ def timeComparisonPOF(outfile, repeat = 20, N =[100,200,400,600,1000,1500], iniP
 			end_time = time.time()
 
 			matrix[i*repeat + j,2] = end_time - start_time
+			print(matrix[i*repeat + j,:])
 
-	df = pd.DataFrame(matrix, columns=['n','accept-reoject', 'k-dDarts'])
+	df = pd.DataFrame(matrix, columns=['n','accept-reject', 'k-dDarts'])
 	df.to_csv(outfile, index=False)
 
 def main():
-	timeComparisonPOF(outfile = 'Results/timeComparisonPofAcceptReject.csv',repeat = 20, N =[100,200,300,400,500,600,700,800, 1000, 1200,1500], iniPoints = 10)
+	timeComparisonPOF(outfile = 'Results/timeComparisonPofAcceptReject.csv',repeat = 20, N =[100,200,300,400,500,600,700,800, 1000, 1200,1500, 2000,3000, 5000], iniPoints = 10)
 
 
 
