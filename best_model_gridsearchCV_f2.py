@@ -133,7 +133,7 @@ def Accuracy_comparison_CV(n , nTest, repeat = 20):
 
 	accuracyMatrixTrain = np.zeros( shape = (repeat, len(Classifier)) )
 	accuracyMatrixPrediction = np.zeros( shape = (repeat, len(Classifier)) )
-	f = open("running_task_check/task_f2_CV.txt", "r")
+	f = open("running_task_check/task_f2_CV.txt", "a")
 	for i in range(repeat):
 		f.write('Epoch %d' %i + '--------------------------------------' + '\n')
 		domains = [[0,1], [0,1] ]
