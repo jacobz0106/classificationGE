@@ -133,8 +133,9 @@ def Accuracy_comparison_CV(n , nTest, repeat = 20):
 
 	accuracyMatrixTrain = np.zeros( shape = (repeat, len(Classifier)) )
 	accuracyMatrixPrediction = np.zeros( shape = (repeat, len(Classifier)) )
+	f = open("running_task_check/task_brusselator_CV.txt", "r")
 	for i in range(repeat):
-		print('Epoch ',i,'--------------------------------------')
+		f.write('Epoch %d' %i + '--------------------------------------' + '\n')
 		domains = [[0.7,1.5], [2.75,3.25], [0,2]]
 		dataSIP = SIP_Data(integral_3D, DQ_Dlambda_3D, 3.75, len(domains) , *domains)
 		dataSIP.generate_POF(n = n, CONST_a = 1.5 ,iniPoints = 10, sampleCriteria = 'k-dDarts')
@@ -159,8 +160,8 @@ def Accuracy_comparison_CV(n , nTest, repeat = 20):
 		X_test = dataSIP.df[['X1','X2','X3']].values
 		y_test = dataSIP.df['Label'].values
 		for model, para, k in zip(Classifier, paras, range(len(Classifier))):
-			print('Tunning model:',str(model))
-			print('with parameters:', para)
+			f.write('Tunning model:' + str(model)+ '\n')
+			f.write('with parameters:' +  str(para) + '\n')
 
 			# encode for Xgboost
 			if isinstance(model, XGBClassifier):
@@ -172,7 +173,7 @@ def Accuracy_comparison_CV(n , nTest, repeat = 20):
 				predictionAccuracy = np.sum(best_model.predict(X_test) == xgb_y_test)/len(xgb_y_test)
 				accuracyMatrixTrain[i, k] =  trainAccuracy
 				accuracyMatrixPrediction[i, k] = predictionAccuracy
-				print(n,'training samples, best model has train accuracy:',trainAccuracy, ' prediction accuracy:', predictionAccuracy, '\n')
+				f.write('training samples, best model has train accuracy: %f' %trainAccuracy + ' prediction accuracy:%f' %predictionAccuracy + '\n')
 			elif isinstance(model, GPSVM):
 				if model.method == "hierarchicalClustering":
 					# Create a GridSearchCV object
@@ -189,7 +190,7 @@ def Accuracy_comparison_CV(n , nTest, repeat = 20):
 					predictionAccuracy = np.sum(best_model.predict(X_test) == y_test)/len(y_test)
 					accuracyMatrixTrain[i, k] =  trainAccuracy
 					accuracyMatrixPrediction[i, k] = predictionAccuracy
-					print(n,'training samples, best model has train accuracy:',trainAccuracy, ' prediction accuracy:', predictionAccuracy, '\n')
+					f.write('training samples, best model has train accuracy: %f' %trainAccuracy + ' prediction accuracy:%f' %predictionAccuracy + '\n')
 				else:
 					model = GPSVM(method = "KMeans")
 					best_model = perform_grid_search_cv(model, para, X_train,y_train)
@@ -197,14 +198,15 @@ def Accuracy_comparison_CV(n , nTest, repeat = 20):
 					predictionAccuracy = np.sum(best_model.predict(X_test) == y_test)/len(y_test)
 					accuracyMatrixTrain[i, k] =  trainAccuracy
 					accuracyMatrixPrediction[i, k] = predictionAccuracy
-					print(n,'training samples, best model has train accuracy:',trainAccuracy, ' prediction accuracy:', predictionAccuracy, '\n')
+					f.write('training samples, best model has train accuracy: %f' %trainAccuracy + ' prediction accuracy:%f' %predictionAccuracy + '\n')
 			else:
 				best_model = perform_grid_search_cv(model, para, X_train,y_train)
 				trainAccuracy = np.sum(best_model.predict(X_train) == y_train)/len(y_train)
 				predictionAccuracy = np.sum(best_model.predict(X_test) == y_test)/len(y_test)
 				accuracyMatrixTrain[i, k] =  trainAccuracy
 				accuracyMatrixPrediction[i, k] = predictionAccuracy
-				print(n,'training samples, best model has train accuracy:',trainAccuracy, ' prediction accuracy:', predictionAccuracy, '\n')
+				f.write('training samples, best model has train accuracy: %f' %trainAccuracy + ' prediction accuracy:%f' %predictionAccuracy + '\n')
+	f.close()
 	return accuracyMatrixTrain, accuracyMatrixPrediction
 
 
