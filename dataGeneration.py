@@ -301,16 +301,16 @@ class elliptic(object):
 	# lamda 3/4 has 0 coefficients
 
 
-def elliptic_function(Lambda, n):
+def elliptic_function(Lambda, n = 100):
 	elliptic_gen = elliptic(n)
 	elliptic_gen.function_y(Lambda)
 	Q = elliptic_gen.mapping_Q()
 	del elliptic_gen
 	return Q
 
-def elliptic_Gradient(Lambda, n):
-	elliptic_gen = elliptic(100)
-	dQ = elliptic_gen.Gradient_Q(lambda_)
+def elliptic_Gradient(Lambda, n = 100):
+	elliptic_gen = elliptic(n)
+	dQ = elliptic_gen.Gradient_Q(Lambda)
 	del elliptic_gen
 	return dQ
 
