@@ -269,7 +269,7 @@ class MagKmeans(object):
 		Returns:
 		numpy.ndarray: Matrix containing the initial K cluster centroids.
 		"""
-		print(initialize_k_cluster_centroids)
+		print("initialize_k_cluster_centroids")
 		# Check if the number of clusters (k) is valid
 
 		if self.K <= 0 or self.K > self.dfTrain.shape[0]:
@@ -309,6 +309,7 @@ class MagKmeans(object):
 		# Update Step
 		iteration = 0
 		stationary_state = False
+		print(stationary_state)
 		while not stationary_state:
 			print('while loop')
 			while iteration < self.max_iterations:
