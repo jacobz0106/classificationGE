@@ -126,7 +126,6 @@ class MagKmeans(object):
 		# Iterate through the solvers
 		for solver in solvers:
 			if solver == "GUROBI":
-				print('solving with gurobi')
 				# Create a new Gurobi model
 				m = Model("optimization")
 
@@ -165,11 +164,10 @@ class MagKmeans(object):
 					m.addConstr(quicksum(Z[i, k] for k in range(K)) == 1)  # Each data point belongs to exactly one cluster
 
 				#suppress or show output
-				m.setParam('OutputFlag', 1)
+				m.setParam('OutputFlag', 0)
 				# Optimize model
 				m.optimize()
 
-				print('-------------------------end optimization -------------------------')
 				# Retrieve the solution
 				solution = np.zeros((n, K))
 				if m.status == GRB.OPTIMAL:
@@ -178,7 +176,6 @@ class MagKmeans(object):
 							solution[i, k] = Z[i, k].X
 					Z_optimal = solution
 					optimal_solution_found = True
-					print('gurobi solution found')
 					break
 				else:
 					print("No optimal solution found.")
