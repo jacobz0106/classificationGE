@@ -96,7 +96,7 @@ class MagKmeans(object):
 		Update cluster membership using linear programming to minimize within-cluster differences + penalty in class distribution.
 
 		"""
-		print('start of function update')
+		print('start of cluster_membership update')
 		X = self.dfTrain
 		C = self.cluster_centers_
 		Y = self.dfLabel
@@ -203,7 +203,7 @@ class MagKmeans(object):
 			#raise Exception("Optimization problem not solved optimally.")
 			print("Optimization problem not solved optimally.")
 			self.clusterMembership = copy.deepcopy(convert_to_binary(Z_optimal))
-		
+		print('end of cluster_membership update')
 
 	def update_cluster_centroids(self):
 		"""
@@ -220,7 +220,7 @@ class MagKmeans(object):
 		numpy.ndarray: Updated cluster centroids.
 		"""
 		# Ensure that data and cluster_membership have the same number of rows
-
+		print('update cluster centroids')
 		if self.dfTrain.shape[0] != self.clusterMembership.shape[0]:
 			raise ValueError("Data and cluster_membership must have the same number of rows.")
 		
@@ -269,6 +269,7 @@ class MagKmeans(object):
 		Returns:
 		numpy.ndarray: Matrix containing the initial K cluster centroids.
 		"""
+		print(initialize_k_cluster_centroids)
 		# Check if the number of clusters (k) is valid
 
 		if self.K <= 0 or self.K > self.dfTrain.shape[0]:
@@ -288,6 +289,7 @@ class MagKmeans(object):
 
 
 	def fit(self, dfTrain, dfLabel, R):
+		print('fit')
 		self.dfTrain = dfTrain
 		self.R = R
 		valid_values = {-1, 1}  # Use a set for faster membership checking
@@ -308,7 +310,7 @@ class MagKmeans(object):
 		iteration = 0
 		stationary_state = False
 		while not stationary_state:
-
+			print('while loop')
 			while iteration < self.max_iterations:
 				self.update_cluster_membership()
 				if self.update_cluster_centroids() == 1:
