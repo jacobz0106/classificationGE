@@ -360,46 +360,47 @@ def main():
 	# Get cluster centroids and labels
 	centroids = scaler.inverse_transform(Mag_Kmeans.cluster_centers_)
 	predicted_labels = Mag_Kmeans.labels_
-	# Create a scatter plot to visualize the clustering
+	print(predicted_labels)
+	# # Create a scatter plot to visualize the clustering
 
 
-	# Create a scatter plot for each group
-	colors = cm.get_cmap('viridis', Mag_Kmeans.K)
-	fig, ax = plt.subplots(1, 1)
-	# Define the significance level (alpha) and degrees of freedom (df)
-	alpha = 0.2  # For a 95% confidence level
-	degofFreedom = 2       # Degrees of freedom (can be adjusted)
-	# Calculate the chi-squared critical value
-	chi2_critical_value = stats.chi2.ppf(1 - alpha, degofFreedom)
+	# # Create a scatter plot for each group
+	# colors = cm.get_cmap('viridis', Mag_Kmeans.K)
+	# fig, ax = plt.subplots(1, 1)
+	# # Define the significance level (alpha) and degrees of freedom (df)
+	# alpha = 0.2  # For a 95% confidence level
+	# degofFreedom = 2       # Degrees of freedom (can be adjusted)
+	# # Calculate the chi-squared critical value
+	# chi2_critical_value = stats.chi2.ppf(1 - alpha, degofFreedom)
 
-	for c, l, i  in zip(colors(np.unique( predicted_labels )),  np.unique( predicted_labels ), range(Mag_Kmeans.K)):
-		condition_plus = (df['Label'] == 1) & (predicted_labels == l)
-		condition_minus = (df['Label'] == -1) & (predicted_labels == l)
-		ax.scatter(df[ condition_plus]['X'], df[condition_plus]['Y'], marker='o', facecolors='none', label="point with label 1 in cluster" + str(l),  edgecolor = c) #
-		ax.scatter(df[condition_minus]['X'], df[condition_minus]['Y'], marker='o', label="point with label -1 in cluster" + str(l), color = c) 
+	# for c, l, i  in zip(colors(np.unique( predicted_labels )),  np.unique( predicted_labels ), range(Mag_Kmeans.K)):
+	# 	condition_plus = (df['Label'] == 1) & (predicted_labels == l)
+	# 	condition_minus = (df['Label'] == -1) & (predicted_labels == l)
+	# 	ax.scatter(df[ condition_plus]['X'], df[condition_plus]['Y'], marker='o', facecolors='none', label="point with label 1 in cluster" + str(l),  edgecolor = c) #
+	# 	ax.scatter(df[condition_minus]['X'], df[condition_minus]['Y'], marker='o', label="point with label -1 in cluster" + str(l), color = c) 
 
-		cluster_points = df[['X','Y']].values[predicted_labels == i]
-		covariance_matrix = np.cov(cluster_points, rowvar=False)
+	# 	cluster_points = df[['X','Y']].values[predicted_labels == i]
+	# 	covariance_matrix = np.cov(cluster_points, rowvar=False)
 		
-		# Calculate the center and width/height of the ellipse
-		ellipse_center = centroids[i]
-		width, height = 2 * np.sqrt(chi2_critical_value * np.linalg.eigvals(covariance_matrix))
+	# 	# Calculate the center and width/height of the ellipse
+	# 	ellipse_center = centroids[i]
+	# 	width, height = 2 * np.sqrt(chi2_critical_value * np.linalg.eigvals(covariance_matrix))
 		
-		# Create and plot the ellipse
-		ellipse = plt.matplotlib.patches.Ellipse(ellipse_center, width, height, fill=False, color = c, label = 'Confidence interval for cluster' + str(l))
-		fig.gca().add_patch(ellipse)
+	# 	# Create and plot the ellipse
+	# 	ellipse = plt.matplotlib.patches.Ellipse(ellipse_center, width, height, fill=False, color = c, label = 'Confidence interval for cluster' + str(l))
+	# 	fig.gca().add_patch(ellipse)
 
 
-	#plt.scatter(df[:, 0], df[:, 1], c=predicted_labels, cmap='rainbow')
-	ax.scatter(centroids[:, 0], centroids[:, 1], marker='x', s=200, c='red', label='Centroids')
-	print(Mag_Kmeans.K)
-	ax.set_title('K-Means Clustering with Discretized 2D Data')
-	#ax.set_xlim(-1,11)
-	#ax.set_ylim(-1,11)
-	ax.set_xlabel('Feature 1')
-	ax.set_ylabel('Feature 2')
-	ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
-	fig.savefig( 'Plots/Convex.png', bbox_inches='tight')
+	# #plt.scatter(df[:, 0], df[:, 1], c=predicted_labels, cmap='rainbow')
+	# ax.scatter(centroids[:, 0], centroids[:, 1], marker='x', s=200, c='red', label='Centroids')
+	# print(Mag_Kmeans.K)
+	# ax.set_title('K-Means Clustering with Discretized 2D Data')
+	# #ax.set_xlim(-1,11)
+	# #ax.set_ylim(-1,11)
+	# ax.set_xlabel('Feature 1')
+	# ax.set_ylabel('Feature 2')
+	# ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
+	# fig.savefig( 'Plots/Convex.png', bbox_inches='tight')
 
 
 
