@@ -122,10 +122,10 @@ class MagKmeans(object):
 		solvers = [ "GUROBI", "ECOS", "SCS"]
 
 		optimal_solution_found = False
-
 		# Iterate through the solvers
 		for solver in solvers:
 			if solver == "GUROBI":
+				print('solve with gurobi')
 				# Create a new Gurobi model
 				gp_env = gp.Env() 
 				m = gp.Model("gp model",env=gp_env)
@@ -140,6 +140,7 @@ class MagKmeans(object):
 
 				# Initialize the absolute value part of the objective
 				objective_abs_part = 0
+				print('linearize the problem')
 				# Calculate absolute values part - this needs to be linearized
 				for i in range(n):
 					for k in range(K):
@@ -161,12 +162,12 @@ class MagKmeans(object):
 				# Define constraints
 				for i in range(n):
 					m.addConstr(quicksum(Z[i, k] for k in range(K)) == 1)  # Each data point belongs to exactly one cluster
-
+				print('optimize the problem...')
 				#suppress or show output
 				m.setParam('OutputFlag', 0)
 				# Optimize model
 				m.optimize()
-
+				print('end optimizing')
 				# Retrieve the solution
 				solution = np.zeros((n, K))
 				if m.status == GRB.OPTIMAL:
@@ -310,6 +311,7 @@ class MagKmeans(object):
 		iteration = 0
 		stationary_state = False
 		while not stationary_state:
+			print('not stationary')
 			while iteration < self.max_iterations:
 				self.update_cluster_membership()
 				print('end update...')
