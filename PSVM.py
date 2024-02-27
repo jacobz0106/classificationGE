@@ -164,7 +164,8 @@ class MagKmeans(object):
 				for i in range(n):
 					m.addConstr(quicksum(Z[i, k] for k in range(K)) == 1)  # Each data point belongs to exactly one cluster
 
-				m.setParam('OutputFlag', 0)
+				#suppress or show output
+				m.setParam('OutputFlag', 1)
 				# Optimize model
 				m.optimize()
 
