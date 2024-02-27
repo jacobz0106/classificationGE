@@ -125,11 +125,9 @@ class MagKmeans(object):
 		# Iterate through the solvers
 		for solver in solvers:
 			if solver == "GUROBI":
-				print('use GUROBI')
 				# Create a new Gurobi model
 				gp_env = gp.Env() 
 				m = gp.Model("gp model",env=gp_env)
-				print('---')
 				# Create binary variables for cluster membership
 				#Z = m.addVars(n, K, vtype=GRB.BINARY, name="Z")
 				Z = m.addVars(n, K, lb=0, ub=1, name="Z")
@@ -312,7 +310,9 @@ class MagKmeans(object):
 		while not stationary_state:
 			while iteration < self.max_iterations:
 				self.update_cluster_membership()
+				print('end update...')
 				if self.update_cluster_centroids() == 1:
+					print('no change...')
 					stationary_state = True
 					break # terminate if centroids didn't change
 				iteration += 1
