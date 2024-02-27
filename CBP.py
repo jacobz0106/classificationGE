@@ -391,8 +391,10 @@ class PSVM(object):
       raise ValueError("Input must be a list or a numpy array.")
 
     # Fit K-Means to the data with two clusters
+    print('ceate MagKmeans')
     self.MagKmeans = MagKmeans(n_clusters = self.clusterNum, max_iterations = self.max_iterations, random_state=0)
     # Standardize the features
+    print('fit MagKmeans')
     self.MagKmeans.fit(self.A_train, self.C_train, R = self.R)
 
     self.clusterCentroids = self.MagKmeans.cluster_centers_

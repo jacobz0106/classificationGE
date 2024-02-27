@@ -76,7 +76,6 @@ def convert_to_binary(Z):
 # Linear program is solved with cvxpy package.
 class MagKmeans(object):
 	def __init__(self, n_clusters, max_iterations  = 500, random_state = 0):
-		print("initialized MagKmeans")
 		#cluster membership matrix
 		self.clusterMembership = []
 		self.K = n_clusters
@@ -97,7 +96,6 @@ class MagKmeans(object):
 		Update cluster membership using linear programming to minimize within-cluster differences + penalty in class distribution.
 
 		"""
-		print('start of cluster_membership update')
 		X = self.dfTrain
 		C = self.cluster_centers_
 		Y = self.dfLabel
@@ -142,7 +140,6 @@ class MagKmeans(object):
 
 				# Initialize the absolute value part of the objective
 				objective_abs_part = 0
-				print('linearized....')
 				# Calculate absolute values part - this needs to be linearized
 				for i in range(n):
 					for k in range(K):
@@ -166,11 +163,9 @@ class MagKmeans(object):
 					m.addConstr(quicksum(Z[i, k] for k in range(K)) == 1)  # Each data point belongs to exactly one cluster
 
 				#suppress or show output
-				print('optimizing')
 				m.setParam('OutputFlag', 0)
 				# Optimize model
 				m.optimize()
-				print('end')
 
 				# Retrieve the solution
 				solution = np.zeros((n, K))
@@ -180,13 +175,11 @@ class MagKmeans(object):
 							solution[i, k] = Z[i, k].X
 					Z_optimal = solution
 					optimal_solution_found = True
-					print('found gurobi solution')
 					break
 				else:
 					print("No optimal solution found.")
 
 			else:#use cvxpy to solve
-				print("solve with cvxpy")
 				try:
 					# Solve the LP problem using the current solver
 					problem.solve(solver=solver)
@@ -209,7 +202,6 @@ class MagKmeans(object):
 			#raise Exception("Optimization problem not solved optimally.")
 			print("Optimization problem not solved optimally.")
 			self.clusterMembership = copy.deepcopy(convert_to_binary(Z_optimal))
-		print('end of cluster_membership update')
 
 	def update_cluster_centroids(self):
 		"""
@@ -226,7 +218,6 @@ class MagKmeans(object):
 		numpy.ndarray: Updated cluster centroids.
 		"""
 		# Ensure that data and cluster_membership have the same number of rows
-		print('update cluster centroids')
 		if self.dfTrain.shape[0] != self.clusterMembership.shape[0]:
 			raise ValueError("Data and cluster_membership must have the same number of rows.")
 		
@@ -275,7 +266,6 @@ class MagKmeans(object):
 		Returns:
 		numpy.ndarray: Matrix containing the initial K cluster centroids.
 		"""
-		print("initialize_k_cluster_centroids")
 		# Check if the number of clusters (k) is valid
 
 		if self.K <= 0 or self.K > self.dfTrain.shape[0]:
@@ -295,7 +285,6 @@ class MagKmeans(object):
 
 
 	def fit(self, dfTrain, dfLabel, R):
-		print('fit')
 		self.dfTrain = dfTrain
 		self.R = R
 		valid_values = {-1, 1}  # Use a set for faster membership checking
@@ -317,7 +306,6 @@ class MagKmeans(object):
 		stationary_state = False
 		print(stationary_state)
 		while not stationary_state:
-			print('while loop')
 			while iteration < self.max_iterations:
 				self.update_cluster_membership()
 				if self.update_cluster_centroids() == 1:
@@ -360,47 +348,46 @@ def main():
 	# Get cluster centroids and labels
 	centroids = scaler.inverse_transform(Mag_Kmeans.cluster_centers_)
 	predicted_labels = Mag_Kmeans.labels_
-	print(predicted_labels)
-	# # Create a scatter plot to visualize the clustering
+	# Create a scatter plot to visualize the clustering
 
 
-	# # Create a scatter plot for each group
-	# colors = cm.get_cmap('viridis', Mag_Kmeans.K)
-	# fig, ax = plt.subplots(1, 1)
-	# # Define the significance level (alpha) and degrees of freedom (df)
-	# alpha = 0.2  # For a 95% confidence level
-	# degofFreedom = 2       # Degrees of freedom (can be adjusted)
-	# # Calculate the chi-squared critical value
-	# chi2_critical_value = stats.chi2.ppf(1 - alpha, degofFreedom)
+	# Create a scatter plot for each group
+	colors = cm.get_cmap('viridis', Mag_Kmeans.K)
+	fig, ax = plt.subplots(1, 1)
+	# Define the significance level (alpha) and degrees of freedom (df)
+	alpha = 0.2  # For a 95% confidence level
+	degofFreedom = 2       # Degrees of freedom (can be adjusted)
+	# Calculate the chi-squared critical value
+	chi2_critical_value = stats.chi2.ppf(1 - alpha, degofFreedom)
 
-	# for c, l, i  in zip(colors(np.unique( predicted_labels )),  np.unique( predicted_labels ), range(Mag_Kmeans.K)):
-	# 	condition_plus = (df['Label'] == 1) & (predicted_labels == l)
-	# 	condition_minus = (df['Label'] == -1) & (predicted_labels == l)
-	# 	ax.scatter(df[ condition_plus]['X'], df[condition_plus]['Y'], marker='o', facecolors='none', label="point with label 1 in cluster" + str(l),  edgecolor = c) #
-	# 	ax.scatter(df[condition_minus]['X'], df[condition_minus]['Y'], marker='o', label="point with label -1 in cluster" + str(l), color = c) 
+	for c, l, i  in zip(colors(np.unique( predicted_labels )),  np.unique( predicted_labels ), range(Mag_Kmeans.K)):
+		condition_plus = (df['Label'] == 1) & (predicted_labels == l)
+		condition_minus = (df['Label'] == -1) & (predicted_labels == l)
+		ax.scatter(df[ condition_plus]['X'], df[condition_plus]['Y'], marker='o', facecolors='none', label="point with label 1 in cluster" + str(l),  edgecolor = c) #
+		ax.scatter(df[condition_minus]['X'], df[condition_minus]['Y'], marker='o', label="point with label -1 in cluster" + str(l), color = c) 
 
-	# 	cluster_points = df[['X','Y']].values[predicted_labels == i]
-	# 	covariance_matrix = np.cov(cluster_points, rowvar=False)
+		cluster_points = df[['X','Y']].values[predicted_labels == i]
+		covariance_matrix = np.cov(cluster_points, rowvar=False)
 		
-	# 	# Calculate the center and width/height of the ellipse
-	# 	ellipse_center = centroids[i]
-	# 	width, height = 2 * np.sqrt(chi2_critical_value * np.linalg.eigvals(covariance_matrix))
+		# Calculate the center and width/height of the ellipse
+		ellipse_center = centroids[i]
+		width, height = 2 * np.sqrt(chi2_critical_value * np.linalg.eigvals(covariance_matrix))
 		
-	# 	# Create and plot the ellipse
-	# 	ellipse = plt.matplotlib.patches.Ellipse(ellipse_center, width, height, fill=False, color = c, label = 'Confidence interval for cluster' + str(l))
-	# 	fig.gca().add_patch(ellipse)
+		# Create and plot the ellipse
+		ellipse = plt.matplotlib.patches.Ellipse(ellipse_center, width, height, fill=False, color = c, label = 'Confidence interval for cluster' + str(l))
+		fig.gca().add_patch(ellipse)
 
 
-	# #plt.scatter(df[:, 0], df[:, 1], c=predicted_labels, cmap='rainbow')
-	# ax.scatter(centroids[:, 0], centroids[:, 1], marker='x', s=200, c='red', label='Centroids')
-	# print(Mag_Kmeans.K)
-	# ax.set_title('K-Means Clustering with Discretized 2D Data')
-	# #ax.set_xlim(-1,11)
-	# #ax.set_ylim(-1,11)
-	# ax.set_xlabel('Feature 1')
-	# ax.set_ylabel('Feature 2')
-	# ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
-	# fig.savefig( 'Plots/Convex.png', bbox_inches='tight')
+	#plt.scatter(df[:, 0], df[:, 1], c=predicted_labels, cmap='rainbow')
+	ax.scatter(centroids[:, 0], centroids[:, 1], marker='x', s=200, c='red', label='Centroids')
+	print(Mag_Kmeans.K)
+	ax.set_title('K-Means Clustering with Discretized 2D Data')
+	#ax.set_xlim(-1,11)
+	#ax.set_ylim(-1,11)
+	ax.set_xlabel('Feature 1')
+	ax.set_ylabel('Feature 2')
+	ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
+	fig.savefig( 'Plots/Convex.png', bbox_inches='tight')
 
 
 
