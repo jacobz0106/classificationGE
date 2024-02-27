@@ -127,7 +127,8 @@ class MagKmeans(object):
 			if solver == "GUROBI":
 				print('use GUROBI')
 				# Create a new Gurobi model
-				m = gp.Model("Gurobi_model")
+				gp_env = gp.Env() 
+				m = gp.Model("gp model",env=gp_env)
 				print('---')
 				# Create binary variables for cluster membership
 				#Z = m.addVars(n, K, vtype=GRB.BINARY, name="Z")
@@ -175,9 +176,13 @@ class MagKmeans(object):
 							solution[i, k] = Z[i, k].X
 					Z_optimal = solution
 					optimal_solution_found = True
+					m.dispose()
+					myEnv.dispose()
 					break
 				else:
 					print("No optimal solution found.")
+					m.dispose()
+					myEnv.dispose()
 
 			else:#use cvxpy to solve
 				try:
