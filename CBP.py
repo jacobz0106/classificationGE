@@ -396,7 +396,7 @@ class PSVM(object):
     # Standardize the features
     print('fit MagKmeans')
     self.MagKmeans.fit(self.A_train, self.C_train, R = self.R)
-
+    print('end fitting')
     self.clusterCentroids = self.MagKmeans.cluster_centers_
 
     # check if all clusters are generated

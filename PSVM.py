@@ -304,7 +304,6 @@ class MagKmeans(object):
 		# Update Step
 		iteration = 0
 		stationary_state = False
-		print(stationary_state)
 		while not stationary_state:
 			while iteration < self.max_iterations:
 				self.update_cluster_membership()
