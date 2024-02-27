@@ -178,6 +178,7 @@ class MagKmeans(object):
 					optimal_solution_found = True
 					m.dispose()
 					myEnv.dispose()
+					print('optimal found')
 					break
 				else:
 					print("No optimal solution found.")
@@ -201,6 +202,7 @@ class MagKmeans(object):
 		# Get the optimized cluster memberships
 
 		# Z_optimal = Z.value
+		print('continue here----')
 		if optimal_solution_found:
 			self.clusterMembership = copy.deepcopy(convert_to_binary(Z_optimal))
 		else:
