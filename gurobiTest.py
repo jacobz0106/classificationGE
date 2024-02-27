@@ -2,7 +2,7 @@ from gurobipy import Model, GRB
 
 # Create a new model
 m = Model("my_model")
-
+print('-------')
 # Enable solver output (set OutputFlag to 1)
 m.setParam('OutputFlag', 1)
 
