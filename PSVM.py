@@ -169,6 +169,7 @@ class MagKmeans(object):
 				# Optimize model
 				m.optimize()
 
+				print('-------------------------end optimization -------------------------')
 				# Retrieve the solution
 				solution = np.zeros((n, K))
 				if m.status == GRB.OPTIMAL:
