@@ -96,6 +96,7 @@ class MagKmeans(object):
 		Update cluster membership using linear programming to minimize within-cluster differences + penalty in class distribution.
 
 		"""
+		print('start update')
 		X = self.dfTrain
 		C = self.cluster_centers_
 		Y = self.dfLabel
@@ -205,6 +206,7 @@ class MagKmeans(object):
 			#raise Exception("Optimization problem not solved optimally.")
 			print("Optimization problem not solved optimally.")
 			self.clusterMembership = copy.deepcopy(convert_to_binary(Z_optimal))
+		print('end update')
 
 	def update_cluster_centroids(self):
 		"""
