@@ -164,9 +164,11 @@ class MagKmeans(object):
 					m.addConstr(quicksum(Z[i, k] for k in range(K)) == 1)  # Each data point belongs to exactly one cluster
 
 				#suppress or show output
+				print('optimizing')
 				m.setParam('OutputFlag', 0)
 				# Optimize model
 				m.optimize()
+				print('end')
 
 				# Retrieve the solution
 				solution = np.zeros((n, K))
@@ -176,6 +178,7 @@ class MagKmeans(object):
 							solution[i, k] = Z[i, k].X
 					Z_optimal = solution
 					optimal_solution_found = True
+					print('found gurobi solution')
 					break
 				else:
 					print("No optimal solution found.")
@@ -196,6 +199,7 @@ class MagKmeans(object):
 				except Exception as e:
 					print(f"Solver {solver} encountered an error: {e}")
 		# Get the optimized cluster memberships
+
 		# Z_optimal = Z.value
 		if optimal_solution_found:
 			self.clusterMembership = copy.deepcopy(convert_to_binary(Z_optimal))
