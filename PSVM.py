@@ -126,6 +126,7 @@ class MagKmeans(object):
 		# Iterate through the solvers
 		for solver in solvers:
 			if solver == "GUROBI":
+				print('use GUROBI')
 				# Create a new Gurobi model
 				m = Model("optimization")
 
@@ -140,7 +141,7 @@ class MagKmeans(object):
 
 				# Initialize the absolute value part of the objective
 				objective_abs_part = 0
-
+				print('linearized....')
 				# Calculate absolute values part - this needs to be linearized
 				for i in range(n):
 					for k in range(K):
