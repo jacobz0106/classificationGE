@@ -129,7 +129,7 @@ class MagKmeans(object):
 				print('use GUROBI')
 				# Create a new Gurobi model
 				m = Model("optimization")
-
+				print('---')
 				# Create binary variables for cluster membership
 				#Z = m.addVars(n, K, vtype=GRB.BINARY, name="Z")
 				Z = m.addVars(n, K, lb=0, ub=1, name="Z")
