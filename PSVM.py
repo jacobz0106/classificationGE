@@ -12,6 +12,7 @@ from dataGeneration import *
 import scipy.stats as stats
 from matplotlib import cm
 from gurobipy import Model, GRB, quicksum
+import gurobipy as gp
 
 print('start of PSVM')
 
@@ -128,7 +129,7 @@ class MagKmeans(object):
 			if solver == "GUROBI":
 				print('use GUROBI')
 				# Create a new Gurobi model
-				m = Model("optimization")
+				m = gp.Model("Gurobi_model")
 				print('---')
 				# Create binary variables for cluster membership
 				#Z = m.addVars(n, K, vtype=GRB.BINARY, name="Z")
