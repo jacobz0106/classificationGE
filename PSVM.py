@@ -13,7 +13,7 @@ import scipy.stats as stats
 from matplotlib import cm
 from gurobipy import Model, GRB, quicksum
 
-
+print('start of PSVM')
 
 
 # Function used to find the distance matrix.
@@ -75,6 +75,7 @@ def convert_to_binary(Z):
 # Linear program is solved with cvxpy package.
 class MagKmeans(object):
 	def __init__(self, n_clusters, max_iterations  = 500, random_state = 0):
+		print("initialized MagKmeans")
 		#cluster membership matrix
 		self.clusterMembership = []
 		self.K = n_clusters
@@ -95,6 +96,7 @@ class MagKmeans(object):
 		Update cluster membership using linear programming to minimize within-cluster differences + penalty in class distribution.
 
 		"""
+		print('start of function update')
 		X = self.dfTrain
 		C = self.cluster_centers_
 		Y = self.dfLabel
@@ -124,7 +126,7 @@ class MagKmeans(object):
 		# Iterate through the solvers
 		for solver in solvers:
 			if solver == "GUROBI":
-
+				print('solving with gurobi')
 				# Create a new Gurobi model
 				m = Model("optimization")
 
@@ -174,11 +176,13 @@ class MagKmeans(object):
 							solution[i, k] = Z[i, k].X
 					Z_optimal = solution
 					optimal_solution_found = True
+					print('gurobi solution found')
 					break
 				else:
 					print("No optimal solution found.")
 
 			else:#use cvxpy to solve
+				print("solve with cvxpy")
 				try:
 					# Solve the LP problem using the current solver
 					problem.solve(solver=solver)
