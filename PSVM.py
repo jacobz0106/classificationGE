@@ -315,6 +315,7 @@ class MagKmeans(object):
 		while not stationary_state:
 			print('not stationary')
 			while iteration < self.max_iterations:
+				print('updateing cluster membership')
 				self.update_cluster_membership()
 				print('end update...')
 				if self.update_cluster_centroids() == 1:
