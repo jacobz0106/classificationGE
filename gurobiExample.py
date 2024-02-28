@@ -132,7 +132,12 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5):
 
 def Accuracy_comparison_CV(n , nTest, repeat = 20):
   print('start accuracy comparison function')
-  Classifier = [refrenced_method(), LSVM(), GPSVM(method = "KMeans"),GPSVM(method = 'hierarchicalClustering'),  PSVM()]
+  m1 = refrenced_method()
+  m2 = LSVM()
+  m3 = GPSVM(method = "KMeans")
+  m4 = GPSVM(method = 'hierarchicalClustering')
+  m5 = PSVM()
+  #Classifier = [refrenced_method(), LSVM(), GPSVM(method = "KMeans"),GPSVM(method = 'hierarchicalClustering'),  PSVM()]
   # print(1)
   # Classifier = [svm.SVC()]
   paras = [param_grid_pujol, param_grid_LSVM, param_grid_GPSVM_Kmeans, param_grid_GPSVM_Hier, param_grid_PSVM]
