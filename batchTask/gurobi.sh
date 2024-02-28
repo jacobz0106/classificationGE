@@ -6,4 +6,4 @@ pip install -r ../requirements.txt
 export OMP_NUM_THREADS=10
 export GRB_TOKENSERVER=license1.computecanada.ca
 echo "installation of req packages done."
-python ../gurobiExample.py
+python ../gurobiExample.py 100 500 Brusselator POF

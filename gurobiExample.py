@@ -1,6 +1,3 @@
-print('start of gurobiExample.py')
-import time
-start_time = time.time()
 from sklearn.model_selection import GridSearchCV, cross_val_score
 from sklearn.model_selection import train_test_split
 import pandas as pd
@@ -13,8 +10,8 @@ from xgboost import XGBClassifier
 from CBP import referenced_method, LSVM, PSVM, GPSVM
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.model_selection import KFold
-print('end of importing')
-print("--- %s seconds ---" % (time.time() - start_time))
+import sys
+
 #### Parameter definition:
 ## - Random Forest:
 param_grid_rf = {
@@ -130,15 +127,14 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5):
 
 
 
-def Accuracy_comparison_CV(n , nTest, repeat = 20, sample_crite = 'POF'):
-  print('start accuracy comparison function')
+def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20):
   reference_classifier = referenced_method()
   linear_svm = LSVM()
   kmeans_based_GPSVM = GPSVM(method="KMeans")
   hierarchical_clustering_GPSVM = GPSVM(method='hierarchicalClustering')
   random_forest = RandomForestClassifier()
   mlp_classifier = MLPClassifier()
-  xgboost_classifier = XGBClassifier(use_label_encoder=False, eval_metric='logloss')
+  #xgboost_classifier = XGBClassifier(use_label_encoder=False, eval_metric='logloss')
   support_vector_classifier = SVC()
   profile_svm = PSVM()  # Assuming PSVM is a placeholder for a specific SVM variant
 
@@ -161,8 +157,23 @@ def Accuracy_comparison_CV(n , nTest, repeat = 20, sample_crite = 'POF'):
   accuracyMatrixPrediction = np.zeros( shape = (repeat, len(Classifier)) )
   for i in range(repeat):
     print('Epoch %d' %i + '--------------------------------------' + '\n')
-    domains = [[1,5], [0.1,0.3], [0,1],[0,2]]
-    dataSIP = SIP_Data(elliptic_function, elliptic_Gradient, 0, len(domains) , *domains)
+    if example == 'Brusselator':
+      domains = [[0.7,1.5], [2.75,3.25], [0,2]]
+      dataSIP = SIP_Data(integral_3D, DQ_Dlambda_3D, 3.75, len(domains) , *domains)
+    elif example == 'Elliptic':
+      domains = [[1,5], [0.1,0.3], [0,1],[0,2]]
+      dataSIP = SIP_Data(elliptic_function, elliptic_Gradient, 0, len(domains) , *domains)
+
+    elif example == 'Function1': 
+      domains = [[0,2], [0,2] ]
+      dataSIP = SIP_Data(function1, Gradient_f1, 0.5, len(domains) , *domains)
+
+    elif example == 'Function2': 
+      domains = [[0,1], [0,1] ]
+      dataSIP = SIP_Data(function2, Gradient_f2, 1, len(domains) , *domains)
+    else:
+      raise Valuerror("not a valid example")
+
     if sample_crite == 'POF':
       dataSIP.generate_POF(n = n, CONST_a = 1.5 ,iniPoints = 10, sampleCriteria = 'k-dDarts')
     else:
@@ -170,24 +181,16 @@ def Accuracy_comparison_CV(n , nTest, repeat = 20, sample_crite = 'POF'):
 
 
     Label = dataSIP.df['Label'].values
-    dfTrain = dataSIP.df[['X1','X2','X3', 'X4']].values
-
-    # # Generating indices
-    # indices = np.arange(len(Label))
-    # train_indices, test_indices = train_test_split(indices, test_size=0.25, random_state=42)
-
-
+    dfTrain = dataSIP.iloc[:, :-2].values
     dQ = dataSIP.POFdarts.Q
 
     X_train = dfTrain
     y_train = Label
 
     dataSIP.generate_Uniform(nTest)
-
-    X_test = dataSIP.df[['X1','X2','X3', 'X4']].values
+    X_test = dataSIP.iloc[:, :-2].values
     y_test = dataSIP.df['Label'].values
-    print('return --- ')
-    return
+
     for model, para, k in zip(Classifier, paras, range(len(Classifier))):
       print('Tunning model:' + str(model)+ '\n')
       print('with parameters:' +  str(para) + '\n')
@@ -239,7 +242,18 @@ def Accuracy_comparison_CV(n , nTest, repeat = 20, sample_crite = 'POF'):
 
 
 def main():
-  accuracyTrain, accuracyPrediction = Accuracy_comparison_CV(100, 500)
+  if len(sys.argv) != 5
+    raise Valuerror('not enough argument')
+
+  for i, arg in enumerate(sys.argv[1:], start=1):
+        print(f"Argument {i}: {arg}")
+  # train size, test size, example name = [Brusselator, Elliptic, Function1, Function2], sample method 
+
+  accuracyTrain, accuracyPrediction = Accuracy_comparison_CV(int(argv[1]), int(argv[2]), str(argv[3]), str(argv[4]))
+  filenameTrain = 'Results/CVresults/Train_accuracy_' + str(argv[1]) + '_' + str(argv[2]) + '_' + str(argv[3]) + '_' + str(argv[4]) + '.csv'
+  filenamePredict= 'Results/CVresults/Prediction_accuracy' + str(argv[1]) + '_' + str(argv[2]) + '_' + str(argv[3]) + '_' + str(argv[4]) + '.csv'
+  np.savetxt(filenameTrain, accuracyTrain, delimiter=",", header = '')
+  np.savetxt(filenamePredict, accuracyPrediction, delimiter=",", header = '')
 
 
 
