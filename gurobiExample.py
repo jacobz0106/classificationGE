@@ -181,14 +181,14 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
 
 
     Label = dataSIP.df['Label'].values
-    dfTrain = dataSIP.iloc[:, :-2].values
+    dfTrain = dataSIP.df.iloc[:, :-2].values
     dQ = dataSIP.POFdarts.Q
 
     X_train = dfTrain
     y_train = Label
 
     dataSIP.generate_Uniform(nTest)
-    X_test = dataSIP.iloc[:, :-2].values
+    X_test = dataSIP.df.iloc[:, :-2].values
     y_test = dataSIP.df['Label'].values
 
     for model, para, k in zip(Classifier, paras, range(len(Classifier))):
@@ -245,13 +245,11 @@ def main():
   if len(sys.argv) != 5:
     raise Valuerror('not enough argument')
 
-  for i, arg in enumerate(sys.argv[1:], start=1):
-        print(f"Argument {i}: {arg}")
   # train size, test size, example name = [Brusselator, Elliptic, Function1, Function2], sample method 
 
-  accuracyTrain, accuracyPrediction = Accuracy_comparison_CV(int(argv[1]), int(argv[2]), str(argv[3]), str(argv[4]))
-  filenameTrain = 'Results/CVresults/Train_accuracy_' + str(argv[1]) + '_' + str(argv[2]) + '_' + str(argv[3]) + '_' + str(argv[4]) + '.csv'
-  filenamePredict= 'Results/CVresults/Prediction_accuracy' + str(argv[1]) + '_' + str(argv[2]) + '_' + str(argv[3]) + '_' + str(argv[4]) + '.csv'
+  accuracyTrain, accuracyPrediction = Accuracy_comparison_CV(int(sys.argv[1]), int(sys.argv[2]), str(sys.argv[3]), str(sys.argv[4]))
+  filenameTrain = 'Results/CVresults/Train_accuracy_' + str(sys.argv[1]) + '_' + str(sys.argv[2]) + '_' + str(sys.argv[3]) + '_' + str(sys.argv[4]) + '.csv'
+  filenamePredict= 'Results/CVresults/Prediction_accuracy' + str(sys.argv[1]) + '_' + str(sys.argv[2]) + '_' + str(sys.argv[3]) + '_' + str(sys.argv[4]) + '.csv'
   np.savetxt(filenameTrain, accuracyTrain, delimiter=",", header = '')
   np.savetxt(filenamePredict, accuracyPrediction, delimiter=",", header = '')
 
