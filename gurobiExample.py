@@ -136,6 +136,10 @@ def Accuracy_comparison_CV(n , nTest, repeat = 20):
   m2 = LSVM()
   m3 = GPSVM(method = "KMeans")
   m4 = GPSVM(method = 'hierarchicalClustering')
+  m5 = RandomForestClassifier()
+  m6 = MLPClassifier()
+  m7 = XGBClassifier(use_label_encoder=False, eval_metric = 'logloss')
+  m8 = SVC()
   m5 = PSVM()
   #Classifier = [refrenced_method(), LSVM(), GPSVM(method = "KMeans"),GPSVM(method = 'hierarchicalClustering'),  PSVM()]
   # print(1)
