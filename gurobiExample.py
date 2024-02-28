@@ -10,7 +10,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn import svm
 from xgboost import XGBClassifier
-from CBP import refrenced_method, LSVM, PSVM, GPSVM
+from CBP import referenced_method, LSVM, PSVM, GPSVM
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.model_selection import KFold
 print('end of importing')

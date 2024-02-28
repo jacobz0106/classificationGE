@@ -114,7 +114,7 @@ class CBP(object):
 # Class referenced_method implementation adapted from the paper's pseudocode.
 
 
-class refrenced_method(object):
+class referenced_method(object):
   '''
   C_train must have label{1, -1}
   '''
