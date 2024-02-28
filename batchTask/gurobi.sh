@@ -4,4 +4,5 @@ source ~/env_gurobi/bin/activate
 pip install --no-index --upgrade pip
 pip install -r ../requirements.txt
 export OMP_NUM_THREADS=10
+export GRB_TOKENSERVER=license1.computecanada.ca
 python ../gurobiExample.py
