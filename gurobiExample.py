@@ -242,7 +242,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
 
 
 def main():
-  if len(sys.argv) != 5
+  if len(sys.argv) != 5:
     raise Valuerror('not enough argument')
 
   for i, arg in enumerate(sys.argv[1:], start=1):
