@@ -125,7 +125,6 @@ class MagKmeans(object):
 		# Iterate through the solvers
 		for solver in solvers:
 			if solver == "GUROBI":
-				print('solve with gurobi')
 				# Create a new Gurobi model
 				gp_env = gp.Env() 
 				m = gp.Model("gp model",env=gp_env)
@@ -140,7 +139,6 @@ class MagKmeans(object):
 
 				# Initialize the absolute value part of the objective
 				objective_abs_part = 0
-				print('linearize the problem')
 				# Calculate absolute values part - this needs to be linearized
 				for i in range(n):
 					for k in range(K):
@@ -162,28 +160,20 @@ class MagKmeans(object):
 				# Define constraints
 				for i in range(n):
 					m.addConstr(quicksum(Z[i, k] for k in range(K)) == 1)  # Each data point belongs to exactly one cluster
-				print('optimize the problem...')
 				#suppress or show output
 				m.setParam('OutputFlag', 0)
 				# Optimize model
 				m.optimize()
-				print('end optimizing')
 				# Retrieve the solution
 				solution = np.zeros((n, K))
-				print(m.status)
-				print(GRB.OPTIMAL)
-				print('-------')
 				if m.status == GRB.OPTIMAL:
-					print(Z[1,1])
 					for i in range(n):
 						for k in range(K):
 							solution[i, k] = Z[i, k].X
 					Z_optimal = solution
 					optimal_solution_found = True
-					print('---discard')
 					m.dispose()
 					gp_env.dispose()
-					print('optimal found')
 					break
 				else:
 					print("No optimal solution found.")
@@ -207,14 +197,12 @@ class MagKmeans(object):
 		# Get the optimized cluster memberships
 
 		# Z_optimal = Z.value
-		print('continue here----')
 		if optimal_solution_found:
 			self.clusterMembership = copy.deepcopy(convert_to_binary(Z_optimal))
 		else:
 			#raise Exception("Optimization problem not solved optimally.")
 			print("Optimization problem not solved optimally.")
 			self.clusterMembership = copy.deepcopy(convert_to_binary(Z_optimal))
-		print('end update')
 
 	def update_cluster_centroids(self):
 		"""
@@ -318,13 +306,9 @@ class MagKmeans(object):
 		iteration = 0
 		stationary_state = False
 		while not stationary_state:
-			print('not stationary')
 			while iteration < self.max_iterations:
-				print('updateing cluster membership')
 				self.update_cluster_membership()
-				print('end update...')
 				if self.update_cluster_centroids() == 1:
-					print('no change...')
 					stationary_state = True
 					break # terminate if centroids didn't change
 				iteration += 1
