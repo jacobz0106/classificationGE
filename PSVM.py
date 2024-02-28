@@ -124,10 +124,11 @@ class MagKmeans(object):
 		for solver in solvers:
 			if solver == "GUROBI":
 				# Create a new Gurobi model
-				gp_env = gp.Env() 
-				m = gp.Model("gp model",env=gp_env)
+				gp_env = gp.Env(empty=True) 
 				#suppress or show output
-				m.setParam('OutputFlag', 0)
+				gp_env.setParam("OutputFlag",0)
+				gp_env.start()
+				m = gp.Model("gp model",env=gp_env)
 				# Create binary variables for cluster membership
 				#Z = m.addVars(n, K, vtype=GRB.BINARY, name="Z")
 				Z = m.addVars(n, K, lb=0, ub=1, name="Z")
