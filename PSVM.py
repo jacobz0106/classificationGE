@@ -14,7 +14,6 @@ from matplotlib import cm
 from gurobipy import Model, GRB, quicksum
 import gurobipy as gp
 
-print('start of PSVM')
 
 
 # Function used to find the distance matrix.
@@ -96,7 +95,6 @@ class MagKmeans(object):
 		Update cluster membership using linear programming to minimize within-cluster differences + penalty in class distribution.
 
 		"""
-		print('start update')
 		X = self.dfTrain
 		C = self.cluster_centers_
 		Y = self.dfLabel
@@ -307,10 +305,8 @@ class MagKmeans(object):
 		stationary_state = False
 		while not stationary_state:
 			while iteration < self.max_iterations:
-				print(iteration)
 				self.update_cluster_membership()
 				if self.update_cluster_centroids() == 1:
-					print("reached stationary_state")
 					stationary_state = True
 					break # terminate if centroids didn't change
 				iteration += 1
