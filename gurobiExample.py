@@ -234,7 +234,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random
 print(1)
 # Initialize the SVC
 svc = SVC(C=1.0, kernel='rbf', gamma='scale', probability=True, random_state=42)
-
+print(2)
 # Fit the model
 svc.fit(X_train, y_train)
 
