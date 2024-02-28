@@ -149,11 +149,13 @@ def Accuracy_comparison_CV(n , nTest, repeat = 20):
       hierarchical_clustering_GPSVM,
       random_forest,
       mlp_classifier,
-      xgboost_classifier,
+      # xgboost_classifier,
       support_vector_classifier,
       profile_svm
   ]
-  paras = [param_grid_pujol, param_grid_LSVM, param_grid_GPSVM_Kmeans, param_grid_GPSVM_Hier, param_grid_rf, param_grid_MLP, param_grid_xgb, param_grid_SVM,  param_grid_PSVM]
+  paras = [param_grid_pujol, param_grid_LSVM, param_grid_GPSVM_Kmeans, param_grid_GPSVM_Hier, param_grid_rf, param_grid_MLP, 
+  #param_grid_xgb, 
+  param_grid_SVM,  param_grid_PSVM]
   
   accuracyMatrixTrain = np.zeros( shape = (repeat, len(Classifier)) )
   accuracyMatrixPrediction = np.zeros( shape = (repeat, len(Classifier)) )
