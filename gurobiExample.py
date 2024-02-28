@@ -108,7 +108,9 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5):
   - best_model: The best model with tuned hyperparameters.
   """
   # Create a GridSearchCV object
+  print('start grid search')
   grid_search = GridSearchCV(model, param_grid, cv=cv, scoring='accuracy')
+  print('found optimal solution')
   # Fit the grid search to the data
   grid_search.fit(X, y)
   # Get the best model with tuned hyperparameters
@@ -125,10 +127,12 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5):
 
 
 def Accuracy_comparison_CV(n , nTest, repeat = 20):
-
-  Classifier = [PSVM()]
+  #Classifier = [refrenced_method(), LSVM(), GPSVM(method = "KMeans"),GPSVM(method = 'hierarchicalClustering'),  RandomForestClassifier(), MLPClassifier(), XGBClassifier(use_label_encoder=False, eval_metric = 'logloss'), SVC(), PSVM()]
+  
+  Classifier = [refrenced_method(), PSVM()]
+  print(1)
   #paras = [param_grid_rf, param_grid_MLP, param_grid_xgb, param_grid_SVM, param_grid_pujol, param_grid_LSVM, param_grid_PSVM , param_grid_GPSVM]
-  paras = [param_grid_PSVM]
+  paras = [param_grid_rf,param_grid_PSVM]
   
 
   accuracyMatrixTrain = np.zeros( shape = (repeat, len(Classifier)) )
