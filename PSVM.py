@@ -311,7 +311,6 @@ class MagKmeans(object):
 					stationary_state = True
 					break # terminate if centroids didn't change
 				iteration += 1
-				print(iteration)
 			if iteration == self.max_iterations:
 				print("Termination criteria not met. Consider increasing max_iterations. Reinitialization...")
 				self.K = self.constK
