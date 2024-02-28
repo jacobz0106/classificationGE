@@ -113,7 +113,7 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5):
   """
   # Create a GridSearchCV object
   print('start grid search')
-  grid_search = GridSearchCV(model, param_grid, cv=cv, scoring='accuracy')
+  grid_search = GridSearchCV(model, param_grid, cv=cv, scoring='accuracy', verbose = 3)
   print('found optimal solution')
   # Fit the grid search to the data
   grid_search.fit(X, y)
@@ -155,9 +155,10 @@ def Accuracy_comparison_CV(n , nTest, repeat = 20):
   ]
   paras = [param_grid_pujol, param_grid_LSVM, param_grid_GPSVM_Kmeans, param_grid_GPSVM_Hier, param_grid_rf, param_grid_MLP, param_grid_xgb, param_grid_SVM,  param_grid_PSVM]
   
-
   accuracyMatrixTrain = np.zeros( shape = (repeat, len(Classifier)) )
   accuracyMatrixPrediction = np.zeros( shape = (repeat, len(Classifier)) )
+  print('return --- ')
+  return
   for i in range(repeat):
     print('Epoch %d' %i + '--------------------------------------' + '\n')
     domains = [[1,5], [0.1,0.3], [0,1],[0,2]]
