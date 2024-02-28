@@ -7,7 +7,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
 from xgboost import XGBClassifier
-from CBP import refrenced_method, LSVM, PSVM, GPSVM
+from CBP import referenced_method, LSVM, PSVM, GPSVM
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.model_selection import KFold
 
@@ -126,11 +126,29 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5):
 
 def Accuracy_comparison_CV(n , nTest, repeat = 20):
 
-	Classifier = [refrenced_method(), LSVM(), GPSVM(method = "KMeans"),GPSVM(method = 'hierarchicalClustering'),  RandomForestClassifier(), MLPClassifier(), XGBClassifier(use_label_encoder=False, eval_metric = 'logloss'), SVC(), PSVM()]
-	#paras = [param_grid_rf, param_grid_MLP, param_grid_xgb, param_grid_SVM, param_grid_pujol, param_grid_LSVM, param_grid_PSVM , param_grid_GPSVM]
+	reference_classifier = referenced_method()
+	linear_svm = LSVM()
+	kmeans_based_GPSVM = GPSVM(method="KMeans")
+	hierarchical_clustering_GPSVM = GPSVM(method='hierarchicalClustering')
+	random_forest = RandomForestClassifier()
+	mlp_classifier = MLPClassifier()
+	xgboost_classifier = XGBClassifier(use_label_encoder=False, eval_metric='logloss')
+	support_vector_classifier = SVC()
+	profile_svm = PSVM()  # Assuming PSVM is a placeholder for a specific SVM variant
+
+	Classifier = [
+		reference_classifier,
+		linear_svm,
+		kmeans_based_GPSVM,
+		hierarchical_clustering_GPSVM,
+		random_forest,
+		mlp_classifier,
+		xgboost_classifier,
+		support_vector_classifier,
+		profile_svm
+	]
 	paras = [param_grid_pujol, param_grid_LSVM, param_grid_GPSVM_Kmeans, param_grid_GPSVM_Hier, param_grid_rf, param_grid_MLP, param_grid_xgb, param_grid_SVM,  param_grid_PSVM]
 	
-
 	accuracyMatrixTrain = np.zeros( shape = (repeat, len(Classifier)) )
 	accuracyMatrixPrediction = np.zeros( shape = (repeat, len(Classifier)) )
 	for i in range(repeat):
