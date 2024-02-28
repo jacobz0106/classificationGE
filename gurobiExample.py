@@ -1,3 +1,4 @@
+print('start of gurobiExample.py')
 import time
 start_time = time.time()
 from sklearn.model_selection import GridSearchCV, cross_val_score
@@ -12,7 +13,8 @@ from xgboost import XGBClassifier
 from CBP import refrenced_method, LSVM, PSVM, GPSVM
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.model_selection import KFold
-
+print('end of importing')
+print("--- %s seconds ---" % (time.time() - start_time))
 #### Parameter definition:
 ## - Random Forest:
 param_grid_rf = {
@@ -93,7 +95,7 @@ param_grid_GPSVM_Hier = {
 
 
 
-print("--- %s seconds ---" % (time.time() - start_time))
+
 
 def perform_grid_search_cv(model, param_grid, X, y, cv=5):
   """
@@ -129,6 +131,7 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5):
 
 
 def Accuracy_comparison_CV(n , nTest, repeat = 20):
+  print('start accuracy comparison function')
   Classifier = [refrenced_method(), LSVM(), GPSVM(method = "KMeans"),GPSVM(method = 'hierarchicalClustering'),  PSVM()]
   # print(1)
   # Classifier = [svm.SVC()]
