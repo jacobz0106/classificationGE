@@ -126,6 +126,8 @@ class MagKmeans(object):
 				# Create a new Gurobi model
 				gp_env = gp.Env() 
 				m = gp.Model("gp model",env=gp_env)
+				#suppress or show output
+				m.setParam('OutputFlag', 0)
 				# Create binary variables for cluster membership
 				#Z = m.addVars(n, K, vtype=GRB.BINARY, name="Z")
 				Z = m.addVars(n, K, lb=0, ub=1, name="Z")
@@ -158,8 +160,7 @@ class MagKmeans(object):
 				# Define constraints
 				for i in range(n):
 					m.addConstr(quicksum(Z[i, k] for k in range(K)) == 1)  # Each data point belongs to exactly one cluster
-				#suppress or show output
-				m.setParam('OutputFlag', 0)
+
 				# Optimize model
 				m.optimize()
 				# Retrieve the solution
