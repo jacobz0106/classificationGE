@@ -8,7 +8,7 @@ import numpy as np
 from dataGeneration import *
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
-from sklearn import svm
+from sklearn.svm import SVC
 from xgboost import XGBClassifier
 from CBP import referenced_method, LSVM, PSVM, GPSVM
 from sklearn.base import BaseEstimator, ClassifierMixin
