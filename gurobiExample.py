@@ -142,7 +142,7 @@ def Accuracy_comparison_CV(n , nTest, repeat = 20):
   support_vector_classifier = SVC()
   profile_svm = PSVM()  # Assuming PSVM is a placeholder for a specific SVM variant
 
-  classifiers = [
+  Classifier = [
       reference_classifier,
       linear_svm,
       kmeans_based_GPSVM,
