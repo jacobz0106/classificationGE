@@ -174,9 +174,12 @@ class MagKmeans(object):
 				print(GRB.OPTIMAL)
 				print('-------')
 				if m.status == GRB.OPTIMAL:
+					print('flag --')
+					print(Z[1,1])
 					for i in range(n):
 						for k in range(K):
 							solution[i, k] = Z[i, k].X
+					print('end assign')
 					Z_optimal = solution
 					optimal_solution_found = True
 					m.dispose()
