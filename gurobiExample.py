@@ -5,7 +5,7 @@ import numpy as np
 from dataGeneration import *
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
-from sklearn.svm import SVC
+from sklearn import svm
 from xgboost import XGBClassifier
 from CBP import refrenced_method, LSVM, PSVM, GPSVM
 from sklearn.base import BaseEstimator, ClassifierMixin
@@ -128,9 +128,9 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5):
 
 def Accuracy_comparison_CV(n , nTest, repeat = 20):
   #Classifier = [refrenced_method(), LSVM(), GPSVM(method = "KMeans"),GPSVM(method = 'hierarchicalClustering'),  RandomForestClassifier(), MLPClassifier(), XGBClassifier(use_label_encoder=False, eval_metric = 'logloss'), SVC(), PSVM()]
-  Classifier = [refrenced_method(), SVC(), PSVM()]
+  Classifier = [svm.SVC()]
   #paras = [param_grid_rf, param_grid_MLP, param_grid_xgb, param_grid_SVM, param_grid_pujol, param_grid_LSVM, param_grid_PSVM , param_grid_GPSVM]
-  paras = [param_grid_rf,param_grid_PSVM]
+  paras = [param_grid_SVM]
   
 
   accuracyMatrixTrain = np.zeros( shape = (repeat, len(Classifier)) )
