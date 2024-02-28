@@ -229,6 +229,7 @@ X, y = make_classification(n_samples=1000, n_features=20, random_state=42)
 # Split dataset into training and testing
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
 
+print(1)
 # Initialize the SVC
 svc = SVC(C=1.0, kernel='rbf', gamma='scale', probability=True, random_state=42)
 
