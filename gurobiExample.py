@@ -128,18 +128,7 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5):
 
 def Accuracy_comparison_CV(n , nTest, repeat = 20):
   #Classifier = [refrenced_method(), LSVM(), GPSVM(method = "KMeans"),GPSVM(method = 'hierarchicalClustering'),  RandomForestClassifier(), MLPClassifier(), XGBClassifier(use_label_encoder=False, eval_metric = 'logloss'), SVC(), PSVM()]
-  m1 = PSVM()
-  print('1 pass')
-  m2 = refrenced_method()
-  print('2 pass')
-  m3 = LSVM()
-  print('3 pass')
-  m4 = RandomForestClassifier()
-  print('4 pass')
-  m5 = SVC()
-  print('5 pass')
-  Classifier = [refrenced_method(), LSVM(),   RandomForestClassifier(), SVC(), PSVM()]
-  print(1)
+  Classifier = [refrenced_method(), LSVM(), SVC(), PSVM()]
   #paras = [param_grid_rf, param_grid_MLP, param_grid_xgb, param_grid_SVM, param_grid_pujol, param_grid_LSVM, param_grid_PSVM , param_grid_GPSVM]
   paras = [param_grid_rf,param_grid_PSVM]
   
