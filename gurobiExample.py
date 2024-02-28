@@ -130,7 +130,7 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5):
 
 
 
-def Accuracy_comparison_CV(n , nTest, repeat = 20):
+def Accuracy_comparison_CV(n , nTest, repeat = 20, sample_crite = 'POF'):
   print('start accuracy comparison function')
   reference_classifier = referenced_method()
   linear_svm = LSVM()
@@ -159,14 +159,14 @@ def Accuracy_comparison_CV(n , nTest, repeat = 20):
   
   accuracyMatrixTrain = np.zeros( shape = (repeat, len(Classifier)) )
   accuracyMatrixPrediction = np.zeros( shape = (repeat, len(Classifier)) )
-  print('return --- ')
-  return
   for i in range(repeat):
     print('Epoch %d' %i + '--------------------------------------' + '\n')
     domains = [[1,5], [0.1,0.3], [0,1],[0,2]]
     dataSIP = SIP_Data(elliptic_function, elliptic_Gradient, 0, len(domains) , *domains)
-    dataSIP.generate_POF(n = 100, CONST_a = 1.5 ,iniPoints = 10, sampleCriteria = 'k-dDarts')
-
+    if sample_crite == 'POF':
+      dataSIP.generate_POF(n = n, CONST_a = 1.5 ,iniPoints = 10, sampleCriteria = 'k-dDarts')
+    else:
+      dataSIP.generate_Uniform(n)
 
 
     Label = dataSIP.df['Label'].values
@@ -186,6 +186,8 @@ def Accuracy_comparison_CV(n , nTest, repeat = 20):
 
     X_test = dataSIP.df[['X1','X2','X3', 'X4']].values
     y_test = dataSIP.df['Label'].values
+    print('return --- ')
+    return
     for model, para, k in zip(Classifier, paras, range(len(Classifier))):
       print('Tunning model:' + str(model)+ '\n')
       print('with parameters:' +  str(para) + '\n')
