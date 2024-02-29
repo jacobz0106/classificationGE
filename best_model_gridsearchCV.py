@@ -110,7 +110,7 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5):
   - best_model: The best model with tuned hyperparameters.
   """
   # Create a GridSearchCV object
-  grid_search = GridSearchCV(model, param_grid, cv=cv, scoring='accuracy', verbose = 2)
+  grid_search = GridSearchCV(model, param_grid, cv=cv, scoring='accuracy', verbose = 0)
   # Fit the grid search to the data
   grid_search.fit(X, y)
   # Get the best model with tuned hyperparameters
