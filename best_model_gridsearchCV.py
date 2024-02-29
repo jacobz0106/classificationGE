@@ -128,7 +128,7 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5):
 
 
 
-def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 2):
+def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20):
   reference_classifier = referenced_method()
   linear_svm = LSVM()
   kmeans_based_GPSVM = GPSVM(method="KMeans")
@@ -154,7 +154,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 2)
   param_grid_LSVM, param_grid_GPSVM_Kmeans, param_grid_GPSVM_Hier, param_grid_rf, param_grid_MLP, 
   param_grid_xgb, 
   param_grid_SVM,
-    param_grid_PSVM
+  param_grid_PSVM
   ]
   
   accuracyMatrixTrain = np.zeros( shape = (repeat, len(Classifier)) )
@@ -186,7 +186,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 2)
 
     Label = dataSIP.df['Label'].values
     dfTrain = dataSIP.df.iloc[:, :-2].values
-    dQ = dataSIP.POFdarts.Q
+    dQ = dataSIP.Gradient
 
     X_train = dfTrain
     y_train = Label
