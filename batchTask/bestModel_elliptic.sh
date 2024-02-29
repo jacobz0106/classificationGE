@@ -4,4 +4,6 @@ source ~/env_gurobi/bin/activate
 pip install --no-index --upgrade pip
 pip install -r ../requirements.txt
 export OMP_NUM_THREADS=10
-python ../best_model_gridsearchCV_elliptic.py
+export GRB_TOKENSERVER=license1.computecanada.ca
+echo "installation of req packages done."
+python ../best_model_gridsearchCV.py 100 500 Elliptic POF

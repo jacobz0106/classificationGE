@@ -6,4 +6,5 @@ pip install -r ../requirements.txt
 export OMP_NUM_THREADS=10
 export GRB_TOKENSERVER=license1.computecanada.ca
 echo "installation of req packages done."
-python ../best_model_gridsearchCV.py 100 500 Function2 POF
+python ../best_model_gridsearchCV.py 100 500 Function2 Random
+
