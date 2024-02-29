@@ -110,7 +110,7 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5):
   - best_model: The best model with tuned hyperparameters.
   """
   # Create a GridSearchCV object
-  grid_search = GridSearchCV(model, param_grid, cv=cv, scoring='accuracy', verbose = 0)
+  grid_search = GridSearchCV(model, param_grid, cv=cv, scoring='accuracy', verbose = 1)
   # Fit the grid search to the data
   grid_search.fit(X, y)
   # Get the best model with tuned hyperparameters
@@ -133,7 +133,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
   hierarchical_clustering_GPSVM = GPSVM(method='hierarchicalClustering')
   random_forest = RandomForestClassifier()
   mlp_classifier = MLPClassifier()
-  xgboost_classifier = XGBClassifier(use_label_encoder=False, eval_metric='logloss')
+  xgboost_classifier = XGBClassifier(use_label_encoder=False, eval_metric='logloss', n_jobs=4)
   support_vector_classifier = SVC()
   profile_svm = PSVM()  # Assuming PSVM is a placeholder for a specific SVM variant
 
