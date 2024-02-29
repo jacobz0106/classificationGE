@@ -110,9 +110,7 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5):
   - best_model: The best model with tuned hyperparameters.
   """
   # Create a GridSearchCV object
-  print('start grid search')
-  grid_search = GridSearchCV(model, param_grid, cv=cv, scoring='accuracy', verbose = 3)
-  print('found optimal solution')
+  grid_search = GridSearchCV(model, param_grid, cv=cv, scoring='accuracy', verbose = 2)
   # Fit the grid search to the data
   grid_search.fit(X, y)
   # Get the best model with tuned hyperparameters
@@ -196,6 +194,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
     y_test = dataSIP.df['Label'].values
 
     for model, para, k in zip(Classifier, paras, range(len(Classifier))):
+      print('-------------------------------------------------')
       print('Tunning model:' + str(model)+ '\n')
       print('with parameters:' +  str(para) + '\n')
 
