@@ -12,6 +12,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.model_selection import KFold
 import sys
 
+
 #### Parameter definition:
 ## - Random Forest:
 param_grid_rf = {
@@ -127,14 +128,14 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5):
 
 
 
-def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20):
+def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 2):
   reference_classifier = referenced_method()
   linear_svm = LSVM()
   kmeans_based_GPSVM = GPSVM(method="KMeans")
   hierarchical_clustering_GPSVM = GPSVM(method='hierarchicalClustering')
   random_forest = RandomForestClassifier()
   mlp_classifier = MLPClassifier()
-  #xgboost_classifier = XGBClassifier(use_label_encoder=False, eval_metric='logloss')
+  xgboost_classifier = XGBClassifier(use_label_encoder=False, eval_metric='logloss')
   support_vector_classifier = SVC()
   profile_svm = PSVM()  # Assuming PSVM is a placeholder for a specific SVM variant
 
@@ -145,13 +146,16 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
       hierarchical_clustering_GPSVM,
       random_forest,
       mlp_classifier,
-      # xgboost_classifier,
+      xgboost_classifier,
       support_vector_classifier,
       profile_svm
   ]
-  paras = [param_grid_pujol, param_grid_LSVM, param_grid_GPSVM_Kmeans, param_grid_GPSVM_Hier, param_grid_rf, param_grid_MLP, 
-  #param_grid_xgb, 
-  param_grid_SVM,  param_grid_PSVM]
+  paras = [param_grid_pujol, 
+  param_grid_LSVM, param_grid_GPSVM_Kmeans, param_grid_GPSVM_Hier, param_grid_rf, param_grid_MLP, 
+  param_grid_xgb, 
+  param_grid_SVM,
+    param_grid_PSVM
+  ]
   
   accuracyMatrixTrain = np.zeros( shape = (repeat, len(Classifier)) )
   accuracyMatrixPrediction = np.zeros( shape = (repeat, len(Classifier)) )
@@ -246,10 +250,13 @@ def main():
     raise Valuerror('not enough argument')
 
   # train size, test size, example name = [Brusselator, Elliptic, Function1, Function2], sample method 
+  train_size, test_size, example_name, sample_method = sys.argv[1:5]
 
-  accuracyTrain, accuracyPrediction = Accuracy_comparison_CV(int(sys.argv[1]), int(sys.argv[2]), str(sys.argv[3]), str(sys.argv[4]))
-  filenameTrain = 'Results/CVresults/Train_accuracy_' + str(sys.argv[1]) + '_' + str(sys.argv[2]) + '_' + str(sys.argv[3]) + '_' + str(sys.argv[4]) + '.csv'
-  filenamePredict= 'Results/CVresults/Prediction_accuracy' + str(sys.argv[1]) + '_' + str(sys.argv[2]) + '_' + str(sys.argv[3]) + '_' + str(sys.argv[4]) + '.csv'
+  accuracyTrain, accuracyPrediction = Accuracy_comparison_CV(int(train_size), int(test_size), str(example_name), str(sample_method))
+
+
+  filenameTrain = f'../Results/CVresults/Train_accuracy_{train_size}_{test_size}_{example_name}_{sample_method}.csv'
+  filenamePredict = f'../Results/CVresults/Prediction_accuracy_{train_size}_{test_size}_{example_name}_{sample_method}.csv'
   np.savetxt(filenameTrain, accuracyTrain, delimiter=",", header = '')
   np.savetxt(filenamePredict, accuracyPrediction, delimiter=",", header = '')
 
