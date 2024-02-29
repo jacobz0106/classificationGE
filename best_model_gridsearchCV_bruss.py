@@ -124,7 +124,7 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5):
 
 
 
-def Accuracy_comparison_CV(n , nTest, repeat = 20, sample_crite = 'POF'):
+def Accuracy_comparison_CV(n , nTest, sample_crite = 'POF', repeat = 20):
 	reference_classifier = referenced_method()
 	linear_svm = LSVM()
 	kmeans_based_GPSVM = GPSVM(method="KMeans")
@@ -154,6 +154,7 @@ def Accuracy_comparison_CV(n , nTest, repeat = 20, sample_crite = 'POF'):
 	print("running_task_check/task_brusselator_CV.txt", "a")
 	for i in range(repeat):
 		print('Epoch %d' %i + '--------------------------------------' + '\n')
+
 		domains = [[0.7,1.5], [2.75,3.25], [0,2]]
 		dataSIP = SIP_Data(integral_3D, DQ_Dlambda_3D, 3.75, len(domains) , *domains)
 		if sample_crite == 'POF':
