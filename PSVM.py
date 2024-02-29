@@ -310,6 +310,7 @@ class MagKmeans(object):
 				self.update_cluster_membership()
 				if self.update_cluster_centroids() == 1:
 					stationary_state = True
+					print('Reached stationary state')
 					break # terminate if centroids didn't change
 				iteration += 1
 			if iteration == self.max_iterations:
