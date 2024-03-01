@@ -94,92 +94,92 @@ param_grid_GPSVM_Hier = {
   'method' : ["hierarchicalClustering"],      
 }
 
-def perform_grid_search_cv(estimator, param_grid, X, y, cv=5, scoring='accuracy'):
-    """
-    A simplified custom grid search CV function without using cross_val_score.
+# def perform_grid_search_cv(estimator, param_grid, X, y, cv=5, scoring='accuracy'):
+#     """
+#     A simplified custom grid search CV function without using cross_val_score.
 
-    Parameters:
-    - estimator: The machine learning model to tune.
-    - param_grid: Dictionary with parameters names (`str`) as keys and lists of parameter settings to try as values.
-    - X: Input features (numpy array or pandas DataFrame).
-    - y: Target variable (numpy array or pandas Series).
-    - cv: Number of cross-validation folds.
-    - scoring: A callable to evaluate the predictions on the test set. For simplicity, this will use accuracy.
+#     Parameters:
+#     - estimator: The machine learning model to tune.
+#     - param_grid: Dictionary with parameters names (`str`) as keys and lists of parameter settings to try as values.
+#     - X: Input features (numpy array or pandas DataFrame).
+#     - y: Target variable (numpy array or pandas Series).
+#     - cv: Number of cross-validation folds.
+#     - scoring: A callable to evaluate the predictions on the test set. For simplicity, this will use accuracy.
 
-    Returns:
-    - best_params: The parameter setting that gave the best results on the hold out data.
-    - best_score: Mean cross-validated score of the best_estimator.
-    """
-    best_score = -np.inf
-    best_params = None
+#     Returns:
+#     - best_params: The parameter setting that gave the best results on the hold out data.
+#     - best_score: Mean cross-validated score of the best_estimator.
+#     """
+#     best_score = -np.inf
+#     best_params = None
     
-    # Generate all combinations of parameters
-    from itertools import product
-    keys, values = zip(*param_grid.items())
-    param_combinations = [dict(zip(keys, v)) for v in product(*values)]
+#     # Generate all combinations of parameters
+#     from itertools import product
+#     keys, values = zip(*param_grid.items())
+#     param_combinations = [dict(zip(keys, v)) for v in product(*values)]
     
-    # Define KFold cross-validator
-    kf = KFold(n_splits=cv, shuffle=True, random_state=42)
+#     # Define KFold cross-validator
+#     kf = KFold(n_splits=cv, shuffle=True, random_state=42)
     
-    # Iterate over all combinations of parameters
-    for params in param_combinations:
-        scores = []
+#     # Iterate over all combinations of parameters
+#     for params in param_combinations:
+#         scores = []
         
-        # Perform cross-validation
-        for train_index, test_index in kf.split(X):
-            X_train, X_test = X[train_index], X[test_index]
-            y_train, y_test = y[train_index], y[test_index]
+#         # Perform cross-validation
+#         for train_index, test_index in kf.split(X):
+#             X_train, X_test = X[train_index], X[test_index]
+#             y_train, y_test = y[train_index], y[test_index]
             
-            # Set the parameters and fit the model
-            estimator.set_params(**params)
-            estimator.fit(X_train, y_train)
+#             # Set the parameters and fit the model
+#             estimator.set_params(**params)
+#             estimator.fit(X_train, y_train)
             
-            # Make predictions and evaluate
-            y_pred = estimator.predict(X_test)
-            if scoring is None:
-                # Use accuracy as default scoring
-                score = np.mean(y_pred == y_test)
-            else:
-                score = scoring(y_test, y_pred)
+#             # Make predictions and evaluate
+#             y_pred = estimator.predict(X_test)
+#             if scoring is None:
+#                 # Use accuracy as default scoring
+#                 score = np.mean(y_pred == y_test)
+#             else:
+#                 score = scoring(y_test, y_pred)
                 
-            scores.append(score)
+#             scores.append(score)
         
-        # Compute the mean score
-        mean_score = np.mean(scores)
+#         # Compute the mean score
+#         mean_score = np.mean(scores)
         
-        # Update the best parameters if the current mean score is greater
-        if mean_score > best_score:
-            best_score = mean_score
-            best_params = params
-    estimator.set_params(**best_params)
-    estimator.fit(X,y)
-    return estimator
+#         # Update the best parameters if the current mean score is greater
+#         if mean_score > best_score:
+#             best_score = mean_score
+#             best_params = params
+#     estimator.set_params(**best_params)
+#     estimator.fit(X,y)
+#     return estimator
 
 
 
-# def perform_grid_search_cv(model, param_grid, X, y, cv=5):
-#   """
-#   Perform hyperparameter tuning using GridSearchCV and cross-validation.
+def perform_grid_search_cv(model, param_grid, X, y, cv=5):
+  """
+  Perform hyperparameter tuning using GridSearchCV and cross-validation.
 
-#   Parameters:
-#   - model: Estimator object (e.g., a classifier or regressor).
-#   - param_grid: Dictionary of hyperparameters to search.
-#   - X: Feature matrix.
-#   - y: Target vector.
-#   - cv: Number of cross-validation folds (default is 5).
+  Parameters:
+  - model: Estimator object (e.g., a classifier or regressor).
+  - param_grid: Dictionary of hyperparameters to search.
+  - X: Feature matrix.
+  - y: Target vector.
+  - cv: Number of cross-validation folds (default is 5).
 
-#   Returns:
-#   - best_model: The best model with tuned hyperparameters.
-#   """
-#   #Create a GridSearchCV object
-#   grid_search = GridSearchCV(model, param_grid, cv=cv, scoring='accuracy', verbose = 1, n_jobs = -1)
-#   # Fit the grid search to the data
-#   grid_search.fit(X, y)
-#   # Get the best model with tuned hyperparameters
-#   best_model = grid_search.best_estimator_
+  Returns:
+  - best_model: The best model with tuned hyperparameters.
+  """
+  #Create a GridSearchCV object
+  grid_search = GridSearchCV(model, param_grid, cv=cv, scoring='accuracy', verbose = 1, n_jobs = -1)
+  # Fit the grid search to the data
+  grid_search.fit(X, y)
+  # Get the best model with tuned hyperparameters
+  best_model = grid_search.best_estimator_
 
 
-#   return best_model
+  return best_model
 
 
 
