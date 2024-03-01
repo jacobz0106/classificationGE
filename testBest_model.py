@@ -129,14 +129,14 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5):
 
 
 def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20):
-  reference_classifier = referenced_method()
-  linear_svm = LSVM()
-  kmeans_based_GPSVM = GPSVM(method="KMeans")
-  hierarchical_clustering_GPSVM = GPSVM(method='hierarchicalClustering')
-  random_forest = RandomForestClassifier()
-  mlp_classifier = MLPClassifier()
-  xgboost_classifier = XGBClassifier(use_label_encoder=False, eval_metric='logloss', n_jobs=1)
-  support_vector_classifier = SVC()
+  # reference_classifier = referenced_method()
+  # linear_svm = LSVM()
+  # kmeans_based_GPSVM = GPSVM(method="KMeans")
+  # hierarchical_clustering_GPSVM = GPSVM(method='hierarchicalClustering')
+  # random_forest = RandomForestClassifier()
+  # mlp_classifier = MLPClassifier()
+  # xgboost_classifier = XGBClassifier(use_label_encoder=False, eval_metric='logloss', n_jobs=1)
+  # support_vector_classifier = SVC()
   profile_svm = PSVM()  # Assuming PSVM is a placeholder for a specific SVM variant
 
   Classifier = [
