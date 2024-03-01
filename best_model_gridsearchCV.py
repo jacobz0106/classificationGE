@@ -1,5 +1,4 @@
-from sklearn.model_selection import GridSearchCV, cross_val_score
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV, cross_val_score, KFold, train_test_split
 import pandas as pd
 import numpy as np
 from dataGeneration import *
@@ -9,7 +8,6 @@ from sklearn.svm import SVC
 from xgboost import XGBClassifier
 from CBP import referenced_method, LSVM, PSVM, GPSVM
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.model_selection import KFold
 import sys
 
 
@@ -110,7 +108,7 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5):
   - best_model: The best model with tuned hyperparameters.
   """
   # Create a GridSearchCV object
-  grid_search = GridSearchCV(model, param_grid, cv=cv, scoring='accuracy', verbose = 1)
+  grid_search = GridSearchCV(model, param_grid, cv=cv, scoring='accuracy', verbose = 1, n_jobs = 1)
   # Fit the grid search to the data
   grid_search.fit(X, y)
   # Get the best model with tuned hyperparameters
