@@ -46,7 +46,7 @@ param_grid_xgb = {
 }
 
 ## - SVM kernel
-param_grid_SVM = {'C': [0.1, 1, 10],
+param_grid_SVM = {'C': [0.1, 0.5,1],
         'gamma': [1, 0.1, 0.01, 0.001, 0.0001],
         'kernel': ['rbf', 'poly'],
         }
@@ -73,7 +73,7 @@ param_grid_LSVM = {
 param_grid_PSVM = {
   'clusterNum':  [ 5,10,15,20],        
   'ensembleNum': [1, 5, 10], 
-  'C':[0.1,0.5,1,5,10],   
+  'C':[0.1,0.5,1],   
   'R':[0, 0.1,0.5,1,5,10],
   'max_iterations': [100],            
 }
@@ -111,14 +111,13 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5):
   Returns:
   - best_model: The best model with tuned hyperparameters.
   """
-  # Create a GridSearchCV object
-  # grid_search = GridSearchCV(model, param_grid, cv=cv, scoring='accuracy', verbose = 1, n_jobs = 1)
-  # # Fit the grid search to the data
-  # grid_search.fit(X, y)
-  # # Get the best model with tuned hyperparameters
-  # best_model = grid_search.best_estimator_
-  best_model = PSVM()
-  best_model.fit(X, y)
+  #Create a GridSearchCV object
+  grid_search = GridSearchCV(model, param_grid, cv=cv, scoring='accuracy', verbose = 1, n_jobs = 1)
+  # Fit the grid search to the data
+  grid_search.fit(X, y)
+  # Get the best model with tuned hyperparameters
+  best_model = grid_search.best_estimator_
+
 
   return best_model
 
