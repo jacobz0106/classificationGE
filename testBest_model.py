@@ -6,6 +6,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
 import warnings
+from itertools import product
 # Suppress specific UserWarning about use_label_encoder deprecation
 warnings.filterwarnings("ignore", message="`use_label_encoder` is deprecated in 1.7.0.")
 
@@ -93,33 +94,71 @@ param_grid_GPSVM_Hier = {
   'method' : ["hierarchicalClustering"],      
 }
 
+def perform_grid_search_cv(estimator, param_grid, X, y, cv=5, scoring='accuracy'):
+    """
+    A simplified custom grid search CV function.
+
+    Parameters:
+    - estimator: The machine learning model to tune.
+    - param_grid: Dictionary with parameters names (`str`) as keys and lists of parameter settings to try as values.
+    - X: Input features.
+    - y: Target variable.
+    - cv: Number of cross-validation folds.
+    - scoring: Scoring metric name.
+
+    Returns:
+    - best_params: The parameter setting that gave the best results on the hold out data.
+    - best_score: Mean cross-validated score of the best_estimator.
+    """
+    best_score = -np.inf
+    best_params = None
+    
+    # Generate all combinations of parameters
+
+    keys, values = zip(*param_grid.items())
+    param_combinations = [dict(zip(keys, v)) for v in product(*values)]
+    
+    # Iterate over all combinations
+    for params in param_combinations:
+        # Set the parameters of the estimator
+        estimator.set_params(**params)
+        # Perform cross-validation and compute the mean score
+        scores = cross_val_score(estimator, X, y, cv=cv, scoring=scoring)
+        mean_score = np.mean(scores)
+        
+        # Update the best parameters if the current mean score is greater
+        if mean_score > best_score:
+            best_score = mean_score
+            best_params = params
+    estimator.set_params(**best_params)
+    estimator.fit(X,y)
+    return estimator
 
 
 
+# def perform_grid_search_cv(model, param_grid, X, y, cv=5):
+#   """
+#   Perform hyperparameter tuning using GridSearchCV and cross-validation.
 
-def perform_grid_search_cv(model, param_grid, X, y, cv=5):
-  """
-  Perform hyperparameter tuning using GridSearchCV and cross-validation.
+#   Parameters:
+#   - model: Estimator object (e.g., a classifier or regressor).
+#   - param_grid: Dictionary of hyperparameters to search.
+#   - X: Feature matrix.
+#   - y: Target vector.
+#   - cv: Number of cross-validation folds (default is 5).
 
-  Parameters:
-  - model: Estimator object (e.g., a classifier or regressor).
-  - param_grid: Dictionary of hyperparameters to search.
-  - X: Feature matrix.
-  - y: Target vector.
-  - cv: Number of cross-validation folds (default is 5).
-
-  Returns:
-  - best_model: The best model with tuned hyperparameters.
-  """
-  #Create a GridSearchCV object
-  grid_search = GridSearchCV(model, param_grid, cv=cv, scoring='accuracy', verbose = 1, n_jobs = -1)
-  # Fit the grid search to the data
-  grid_search.fit(X, y)
-  # Get the best model with tuned hyperparameters
-  best_model = grid_search.best_estimator_
+#   Returns:
+#   - best_model: The best model with tuned hyperparameters.
+#   """
+#   #Create a GridSearchCV object
+#   grid_search = GridSearchCV(model, param_grid, cv=cv, scoring='accuracy', verbose = 1, n_jobs = -1)
+#   # Fit the grid search to the data
+#   grid_search.fit(X, y)
+#   # Get the best model with tuned hyperparameters
+#   best_model = grid_search.best_estimator_
 
 
-  return best_model
+#   return best_model
 
 
 
