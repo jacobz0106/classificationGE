@@ -135,7 +135,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
   kmeans_based_GPSVM = GPSVM(method="KMeans")
   hierarchical_clustering_GPSVM = GPSVM(method='hierarchicalClustering')
   random_forest = RandomForestClassifier()
-  mlp_classifier = MLPClassifier(n_jobs = 1)
+  mlp_classifier = MLPClassifier()
   xgboost_classifier = XGBClassifier(use_label_encoder=False, eval_metric='logloss')
   support_vector_classifier = SVC()
   profile_svm = PSVM()  # Assuming PSVM is a placeholder for a specific SVM variant
