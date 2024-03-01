@@ -96,15 +96,15 @@ param_grid_GPSVM_Hier = {
 
 def perform_grid_search_cv(estimator, param_grid, X, y, cv=5, scoring='accuracy'):
     """
-    A simplified custom grid search CV function.
+    A simplified custom grid search CV function without using cross_val_score.
 
     Parameters:
     - estimator: The machine learning model to tune.
     - param_grid: Dictionary with parameters names (`str`) as keys and lists of parameter settings to try as values.
-    - X: Input features.
-    - y: Target variable.
+    - X: Input features (numpy array or pandas DataFrame).
+    - y: Target variable (numpy array or pandas Series).
     - cv: Number of cross-validation folds.
-    - scoring: Scoring metric name.
+    - scoring: A callable to evaluate the predictions on the test set. For simplicity, this will use accuracy.
 
     Returns:
     - best_params: The parameter setting that gave the best results on the hold out data.
@@ -114,16 +114,37 @@ def perform_grid_search_cv(estimator, param_grid, X, y, cv=5, scoring='accuracy'
     best_params = None
     
     # Generate all combinations of parameters
-
+    from itertools import product
     keys, values = zip(*param_grid.items())
     param_combinations = [dict(zip(keys, v)) for v in product(*values)]
     
-    # Iterate over all combinations
+    # Define KFold cross-validator
+    kf = KFold(n_splits=cv, shuffle=True, random_state=42)
+    
+    # Iterate over all combinations of parameters
     for params in param_combinations:
-        # Set the parameters of the estimator
-        estimator.set_params(**params)
-        # Perform cross-validation and compute the mean score
-        scores = cross_val_score(estimator, X, y, cv=cv, scoring=scoring)
+        scores = []
+        
+        # Perform cross-validation
+        for train_index, test_index in kf.split(X):
+            X_train, X_test = X[train_index], X[test_index]
+            y_train, y_test = y[train_index], y[test_index]
+            
+            # Set the parameters and fit the model
+            estimator.set_params(**params)
+            estimator.fit(X_train, y_train)
+            
+            # Make predictions and evaluate
+            y_pred = estimator.predict(X_test)
+            if scoring is None:
+                # Use accuracy as default scoring
+                score = np.mean(y_pred == y_test)
+            else:
+                score = scoring(y_test, y_pred)
+                
+            scores.append(score)
+        
+        # Compute the mean score
         mean_score = np.mean(scores)
         
         # Update the best parameters if the current mean score is greater
@@ -169,7 +190,7 @@ def perform_grid_search_cv(estimator, param_grid, X, y, cv=5, scoring='accuracy'
 
 
 def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20):
-  # reference_classifier = referenced_method()
+  reference_classifier = referenced_method()
   # linear_svm = LSVM()
   # kmeans_based_GPSVM = GPSVM(method="KMeans")
   # hierarchical_clustering_GPSVM = GPSVM(method='hierarchicalClustering')
@@ -180,7 +201,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
   profile_svm = PSVM()  # Assuming PSVM is a placeholder for a specific SVM variant
 
   Classifier = [
-      # reference_classifier,
+      reference_classifier
       # linear_svm,
       # kmeans_based_GPSVM,
       # hierarchical_clustering_GPSVM,
@@ -188,10 +209,10 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
       # mlp_classifier,
       # xgboost_classifier,
       # support_vector_classifier,
-      profile_svm
+      #profile_svm
   ]
   paras = [
-  # param_grid_pujol, 
+  param_grid_pujol#, 
   # param_grid_LSVM, 
   # param_grid_GPSVM_Kmeans, 
   # param_grid_GPSVM_Hier, 
@@ -199,7 +220,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
   # param_grid_MLP, 
   # param_grid_xgb, 
   # param_grid_SVM,
-  param_grid_PSVM
+  #param_grid_PSVM
   ]
   
   accuracyMatrixTrain = np.zeros( shape = (repeat, len(Classifier)) )
