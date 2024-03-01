@@ -201,7 +201,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
   profile_svm = PSVM()  # Assuming PSVM is a placeholder for a specific SVM variant
 
   Classifier = [
-      reference_classifier
+      reference_classifier,
       # linear_svm,
       # kmeans_based_GPSVM,
       # hierarchical_clustering_GPSVM,
@@ -209,10 +209,10 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
       # mlp_classifier,
       # xgboost_classifier,
       # support_vector_classifier,
-      #profile_svm
+      profile_svm
   ]
   paras = [
-  param_grid_pujol#, 
+  param_grid_pujol, 
   # param_grid_LSVM, 
   # param_grid_GPSVM_Kmeans, 
   # param_grid_GPSVM_Hier, 
@@ -220,7 +220,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
   # param_grid_MLP, 
   # param_grid_xgb, 
   # param_grid_SVM,
-  #param_grid_PSVM
+  param_grid_PSVM
   ]
   
   accuracyMatrixTrain = np.zeros( shape = (repeat, len(Classifier)) )
