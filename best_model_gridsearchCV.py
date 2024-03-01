@@ -1,3 +1,4 @@
+print('-----')
 from sklearn.model_selection import GridSearchCV, cross_val_score, KFold, train_test_split
 import pandas as pd
 import numpy as np
@@ -40,9 +41,9 @@ param_grid_xgb = {
   'learning_rate': [0.01, 0.1, 0.2],    # Learning rate (real-valued)
   'min_child_weight': [1, 3, 5],         # Minimum sum of instance weight needed in a child (integer)
   'subsample': [0.7, 0.8, 0.9],         # Fraction of samples used for fitting the trees (real-valued)
-  'gamma': [0, 0.1, 0.2],               # Minimum loss reduction required to make a further partition on a leaf node (real-valued)
-  'lambda': [0.0, 1.0, 2.0],                  # L2 regularization term (real-valued)
-  'alpha': [0.0, 1.0, 2.0],                   # L1 regularization term (real-valued)
+  # 'gamma': [0, 0.1, 0.2],               # Minimum loss reduction required to make a further partition on a leaf node (real-valued)
+  # 'lambda': [0.0, 1.0, 2.0],                  # L2 regularization term (real-valued)
+  # 'alpha': [0.0, 1.0, 2.0],                   # L1 regularization term (real-valued)
 }
 
 ## - SVM kernel
