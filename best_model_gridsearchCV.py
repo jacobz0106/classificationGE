@@ -5,6 +5,10 @@ from dataGeneration import *
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
+import warnings
+# Suppress specific UserWarning about use_label_encoder deprecation
+warnings.filterwarnings("ignore", message="`use_label_encoder` is deprecated in 1.7.0.")
+
 from xgboost import XGBClassifier
 from CBP import referenced_method, LSVM, PSVM, GPSVM
 from sklearn.base import BaseEstimator, ClassifierMixin
