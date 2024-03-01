@@ -181,8 +181,9 @@ class referenced_method(object):
       "constLambda" : self.constLambda}
 
   def set_params(self, **parameters):
-      for parameter, value in parameters.items():
-          setattr(self, parameter, value)
+      # for parameter, value in parameters.items():
+      #     setattr(self, parameter, value)
+      self.__init__(**parameters)
       return self
 
 
@@ -290,8 +291,9 @@ class GPSVM(object):
       "method": self.method}
 
   def set_params(self, **parameters):
-      for parameter, value in parameters.items():
-          setattr(self, parameter, value)
+      # for parameter, value in parameters.items():
+      #     setattr(self, parameter, value)
+      self.__init__(**parameters)
       return self
 
 
@@ -334,8 +336,9 @@ class LSVM(object):
       }
 
   def set_params(self, **parameters):
-      for parameter, value in parameters.items():
-          setattr(self, parameter, value)
+      # for parameter, value in parameters.items():
+      #     setattr(self, parameter, value)
+      self.__init__(**parameters)
       return self
 
 
@@ -442,8 +445,9 @@ class PSVM(object):
       "R":self.R}
 
   def set_params(self, **parameters):
-      for parameter, value in parameters.items():
-          setattr(self, parameter, value)
+      # for parameter, value in parameters.items():
+      #     setattr(self, parameter, value)
+      self.__init__(**parameters)
       return self
 
 
