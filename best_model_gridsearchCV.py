@@ -92,7 +92,7 @@ param_grid_GPSVM_Hier = {
   'ensembleNum': [1, 3, 5, 7], 
   'C':[0.05, 0.1, 0.5,1,5], 
   'method' : ["hierarchicalClustering"], 
-  'CONST_C': [0.05, 0.1, 0.5,1,3,5, 10],     
+  'CONST_C': [0.1,0.5,1,5, 10],     
 }
 
 
@@ -218,7 +218,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
         if model.method == "hierarchicalClustering":
           # Create a GridSearchCV object
           fit_para = {'dQ':dQ}
-          grid_search = GridSearchCV(model, para, cv=5, scoring='accuracy')
+          grid_search = GridSearchCV(model, para, cv=5, scoring='accuracy', verbose = 1)
 
           # Fit the grid search to the data
           grid_search.fit(X_train, y_train, **fit_para)
