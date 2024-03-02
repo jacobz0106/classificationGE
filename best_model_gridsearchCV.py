@@ -84,13 +84,13 @@ param_grid_GPSVM_Kmeans = {
   'method' : ["KMeans"], 
   'clusterNum':  [ 5,10,12, 15,20],        
   'ensembleNum': [1, 3, 5, 7], 
-  'C':[0, 0.1,0.3,0.5,1,5],      
+  'C':[0.01, 0.1,0.3,0.5,1,5],      
 }
 
 param_grid_GPSVM_Hier = {
   'clusterNum':  [ 5,10,12, 15,20],        
   'ensembleNum': [1, 3, 5, 7], 
-  'C':[0, 0.1,0.3, 0.5,1,5], 
+  'C':[0.01, 0.1,0.3, 0.5,1,5], 
   'method' : ["hierarchicalClustering"], 
   'CONST_C': [0, 0.1,0.3, 0.5,1,3, 5]     
 }
