@@ -84,14 +84,15 @@ param_grid_GPSVM_Kmeans = {
   'method' : ["KMeans"], 
   'clusterNum':  [ 5,10,12, 15,20],        
   'ensembleNum': [1, 3, 5, 7], 
-  'C':[0.05, 0.1,0.3,0.5,1,5],      
+  'C':[0, 0.1,0.3,0.5,1,5],      
 }
 
 param_grid_GPSVM_Hier = {
   'clusterNum':  [ 5,10,12, 15,20],        
   'ensembleNum': [1, 3, 5, 7], 
-  'C':[0.05, 0.1,0.3, 0.5,1,5], 
-  'method' : ["hierarchicalClustering"],      
+  'C':[0, 0.1,0.3, 0.5,1,5], 
+  'method' : ["hierarchicalClustering"], 
+  'CONST_C': [0, 0.1,0.3, 0.5,1,3, 5]     
 }
 
 
@@ -132,7 +133,7 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5):
 
 def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20):
   reference_classifier = referenced_method()
-  linear_svm = LSVM()
+  localized_linear_svm = LSVM()
   kmeans_based_GPSVM = GPSVM(method="KMeans")
   hierarchical_clustering_GPSVM = GPSVM(method='hierarchicalClustering')
   random_forest = RandomForestClassifier()
@@ -143,7 +144,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
 
   Classifier = [
       reference_classifier,
-      linear_svm,
+      localized_linear_svm,
       kmeans_based_GPSVM,
       hierarchical_clustering_GPSVM,
       random_forest,
