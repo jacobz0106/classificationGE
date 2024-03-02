@@ -65,7 +65,7 @@ param_grid_pujol = {
 ## - LSVM:
 param_grid_LSVM = {
   'K':  [ 5,10,15,20],        
-  'C': [0.1, 1.5, 9.5],               
+  'C': [0.1, 1,1.5, 3,5],               
 }
 
 
@@ -74,7 +74,7 @@ param_grid_LSVM = {
 param_grid_PSVM = {
   'clusterNum':  [ 5,10,12, 15,20],        
   'ensembleNum': [1, 5, 10], 
-  'C':[0.05, 0.1, 0.3, 0.5,1,5,10],   
+  'C':[0.05, 0.1,  0.5,1,5,10],   
   'R':[0, 0.1,0.5,1,5],
   'max_iterations': [100],            
 }
@@ -84,15 +84,15 @@ param_grid_GPSVM_Kmeans = {
   'method' : ["KMeans"], 
   'clusterNum':  [ 5,10,12, 15,20],        
   'ensembleNum': [1, 3, 5, 7], 
-  'C':[0.01, 0.1,0.3,0.5,1,5],      
+  'C':[0.01, 0.1,0.5,1,5],      
 }
 
 param_grid_GPSVM_Hier = {
   'clusterNum':  [ 5,10,12, 15,20],        
   'ensembleNum': [1, 3, 5, 7], 
-  'C':[0.01, 0.1,0.3, 0.5,1,5], 
+  'C':[0.05, 0.1, 0.5,1,5], 
   'method' : ["hierarchicalClustering"], 
-  'CONST_C': [0, 0.1,0.3, 0.5,1,3, 5]     
+  'CONST_C': [0.05, 0.1, 0.5,1,3,5, 10],     
 }
 
 
