@@ -72,7 +72,7 @@ param_grid_LSVM = {
 ## - PSVM:
 
 param_grid_PSVM = {
-  'clusterNum':  [ 5,10,15,20],        
+  'clusterNum':  [ 5,10,12, 15,20],        
   'ensembleNum': [1, 5, 10], 
   'C':[0.1,0.5,1,5,10],   
   'R':[0, 0.1,0.5,1,5,10],
@@ -82,14 +82,14 @@ param_grid_PSVM = {
 ## - GPSVM : 
 param_grid_GPSVM_Kmeans = {
   'method' : ["KMeans"], 
-  'clusterNum':  [ 5,10,15,20],        
-  'ensembleNum': [1, 5, 10], 
+  'clusterNum':  [ 5,10,12, 15,20],        
+  'ensembleNum': [1, 3, 5, 7], 
   'C':[0.1,0.5,1,5,10],      
 }
 
 param_grid_GPSVM_Hier = {
-  'clusterNum':  [ 5,10,15,20],        
-  'ensembleNum': [1, 5, 10], 
+  'clusterNum':  [ 5,10,12, 15,20],        
+  'ensembleNum': [1, 3, 5, 7], 
   'C':[0.1,0.5,1,5,10], 
   'method' : ["hierarchicalClustering"],      
 }
@@ -118,6 +118,7 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5):
   grid_search.fit(X, y)
   # Get the best model with tuned hyperparameters
   best_model = grid_search.best_estimator_
+  print(best_model.get_params())
 
   return best_model
 
