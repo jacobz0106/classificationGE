@@ -224,7 +224,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
 
           # Get the best model with tuned hyperparameters
           best_model = grid_search.best_estimator_
-
+          print(best_model.get_params())
           trainAccuracy = np.sum(best_model.predict(X_train) == y_train)/len(y_train)
           predictionAccuracy = np.sum(best_model.predict(X_test) == y_test)/len(y_test)
           accuracyMatrixTrain[i, k] =  trainAccuracy
