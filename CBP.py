@@ -128,6 +128,8 @@ class referenced_method(object):
     self.cbp = CBP(A_train, C_train)
 
   def fit(self, A_train, C_train):
+    self.cbp = []
+    self.weights = []
     # Check if the input C_train is a numpy array contaning -1 and 1
     valid_values = {-1, 1} 
     if isinstance(C_train, (list, np.ndarray)):
@@ -231,6 +233,10 @@ class GPSVM(object):
     '''
     cluster = hierarchicalClustering or Kmeans
     '''
+    self.SVM = []
+    self.cbp = []
+    self.clusters = []
+    self.clusterCentroids = []
     self._train(A_train, C_train)
     if self.cbp.count < self.clusterNum:
       self.clusterNum = self.cbp.count
@@ -288,7 +294,8 @@ class GPSVM(object):
       return {"clusterNum" : self.clusterNum,
       "ensembleNum" : self.ensembleNum,
       "C": self.C,
-      "method": self.method}
+      "method": self.method,
+      "CONST_C":self.CONST_C}
 
   def set_params(self, **parameters):
       # for parameter, value in parameters.items():
