@@ -182,7 +182,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
       raise Valuerror("not a valid example")
 
     if sample_crite == 'POF':
-      dataSIP.generate_POF(n = n, CONST_a = 1.5 ,iniPoints = 1, sampleCriteria = 'k-dDarts')
+      dataSIP.generate_POF(n = n, CONST_a = 1 ,iniPoints = 1, sampleCriteria = 'k-dDarts')
     else:
       dataSIP.generate_Uniform(n)
 
