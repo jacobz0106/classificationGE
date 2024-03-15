@@ -13,6 +13,7 @@ warnings.filterwarnings("ignore", message="`use_label_encoder` is deprecated in 
 from xgboost import XGBClassifier
 from CBP import referenced_method, LSVM, PSVM, GPSVM
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.neighbors import NearestNeighbors
 import sys
 
 
@@ -52,6 +53,9 @@ param_grid_SVM = {'C': [0.1, 1, 10],
         'kernel': ['rbf', 'poly'],
         }
  
+param_grid_knn = {
+  'n_neighbors': [1,3,5,7],
+}
 
 
 ## - referenced_method:
@@ -141,6 +145,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
   xgboost_classifier = XGBClassifier(use_label_encoder=False, eval_metric='logloss')
   support_vector_classifier = SVC()
   profile_svm = PSVM()  # Assuming PSVM is a placeholder for a specific SVM variant
+  knn = NearestNeighbors()
 
   Classifier = [
       reference_classifier,
@@ -151,13 +156,15 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
       mlp_classifier,
       xgboost_classifier,
       support_vector_classifier,
-      profile_svm
+      profile_svm,
+      knn
   ]
   paras = [param_grid_pujol, 
   param_grid_LSVM, param_grid_GPSVM_Kmeans, param_grid_GPSVM_Hier, param_grid_rf, param_grid_MLP, 
   param_grid_xgb, 
   param_grid_SVM,
-  param_grid_PSVM
+  param_grid_PSVM,
+  param_grid_knn
   ]
   
   accuracyMatrixTrain = np.zeros( shape = (repeat, len(Classifier)) )
@@ -176,7 +183,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
       dataSIP = SIP_Data(function1, Gradient_f1, 0.5, len(domains) , *domains)
 
     elif example == 'Function2': 
-      domains = [[0,1], [0,1] ]
+      domains = [[-1,1], [-1,1] ]
       dataSIP = SIP_Data(function2, Gradient_f2, 1, len(domains) , *domains)
     else:
       raise Valuerror("not a valid example")

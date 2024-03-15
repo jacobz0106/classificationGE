@@ -113,8 +113,8 @@ def DQ_Dlambda(Lambda,lambda3 = 1.65,T = 5,n = 100):
 def DQ_Dlambda_3D(Lambda,T = 5,n = 100):
 	sum1 = (1/T)*np.sum(np.sum(dy_dlambda1_t(Lambda[0], Lambda[1],Lambda[2],T,n),axis = 1)*T/n )
 	sum2 = (1/T)*np.sum(np.sum(dy_dlambda2_t(Lambda[0], Lambda[1],Lambda[2],T,n),axis = 1)*T/n )
-	sum2 = (1/T)*np.sum(np.sum(dy_dlambda2_t(Lambda[0], Lambda[1],Lambda[2],T,n),axis = 1)*T/n )
-	return np.array([sum1,sum2])
+	sum3 = (1/T)*np.sum(np.sum(dy_dlambda3_t(Lambda[0], Lambda[1],Lambda[2],T,n),axis = 1)*T/n )
+	return np.array([sum1,sum2, sum3])
 
 
 
@@ -182,7 +182,7 @@ class elliptic(object):
 			else:
 				A[i, i-1 : i +2] =  self.coefficients(Lambda,x_seq[i])
 				x = x_seq[i]
-				C[i] =  - np.sum([i*j for i, j in zip(self.coefficients_dlambda_1(Lambda,x_seq[i]), self.u[i-1 : i +2])])
+				C[i] =  - np.sum([k*j for k, j in zip(self.coefficients_dlambda_1(Lambda,x_seq[i]), self.u[i-1 : i +2])])
 
 		# A*x = C
 		self.du_dlambda_1 = solve(A, C)
@@ -205,7 +205,7 @@ class elliptic(object):
 			else:
 				A[i, i-1 : i +2] =  self.coefficients(Lambda,x_seq[i])
 				x = x_seq[i]
-				C[i] =  - np.sum([i*j for i, j in zip(self.coefficients_dlambda_2(Lambda,x_seq[i]), self.u[i-1 : i +2])])
+				C[i] =  - np.sum([k*j for k, j in zip(self.coefficients_dlambda_2(Lambda,x_seq[i]), self.u[i-1 : i +2])])
 
 		# A*x = C
 		self.du_dlambda_2 = solve(A, C)
@@ -276,7 +276,7 @@ class elliptic(object):
 		'''
 		h = 1/self.n
 		a = -(2*x*np.exp(-Lambda[0]*x) - Lambda[0]*x**2*np.exp(-Lambda[0]*x) - Lambda[1])
-		b = -(x**2*np.exp( -Lambda[0]*x ) + 0.05 )
+		b = (x**2*np.exp( -Lambda[0]*x ) + 0.05 )
 
 		return [ b/h**2 - a/h, a/h - 2*b/h**2, b/h**2]
 
@@ -286,7 +286,7 @@ class elliptic(object):
 		'''
 		h = 1/self.n
 		a = -(2*x*np.exp(-Lambda[0]*x) - Lambda[0]*x**2*np.exp(-Lambda[0]*x) - Lambda[1])
-		b = -(x**2*np.exp( -Lambda[0]*x ) + 0.05 )
+		b = (x**2*np.exp( -Lambda[0]*x ) + 0.05 )
 		da_dlambda_1 = 3*x**2*np.exp(-Lambda[0]*x) - Lambda[0]*x**3*np.exp(-Lambda[0]*x)
 		db_dlambda_1 = -x**3*np.exp(-Lambda[0]*x)
 
@@ -349,10 +349,9 @@ def function2(X, A = 10, B = 1):
 def Gradient_f2(X, A = 10, B = 1):
 	x = X[0]
 	y = X[1]
-	dx = (1 -np.tanh(B*(y - A*x*(x - 1/2)*(x+1/2)))**2 )*(3*A*x**2 - 1/4*A)
-	dy = (1 -np.tanh(B*(y - A*x*(x - 1/2)*(x+1/2)))**2 )*B
+	dx = B*(1 - np.tanh(B*(-A*x*(x - 0.5)*(x + 0.5) + y))**2)*(-A*x*(x - 0.5) - A*x*(x + 0.5) - A*(x - 0.5)*(x + 0.5))
+	dy = B*(1 - np.tanh(B*(-A*x*(x - 0.5)*(x + 0.5) + y))**2)
 	return np.array([dx,dy]) 
-
 
 
 
@@ -495,7 +494,7 @@ class SIP_Data(object):
 		self.df = []
 		self.Gradient = []
 
-	def generate_Uniform(self,n):
+	def generate_Uniform(self,n, Initialization = True):
 		points = np.array([np.random.uniform(low, high, n) for low, high in self.domain]).T
 
 		self.df = pd.DataFrame(points, columns = [f'X{i+1}' for i in range(self.dim)])
