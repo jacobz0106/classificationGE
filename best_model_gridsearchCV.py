@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore", message="`use_label_encoder` is deprecated in 
 from xgboost import XGBClassifier
 from CBP import referenced_method, LSVM, PSVM, GPSVM
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.neighbors import NearestNeighbors
+from sklearn.neighbors import KNeighborsClassifier
 import sys
 
 
@@ -145,9 +145,10 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
   xgboost_classifier = XGBClassifier(use_label_encoder=False, eval_metric='logloss')
   support_vector_classifier = SVC()
   profile_svm = PSVM()  # Assuming PSVM is a placeholder for a specific SVM variant
-  knn = NearestNeighbors()
+  knn = KNeighborsClassifier()
 
   Classifier = [
+      knn,
       reference_classifier,
       localized_linear_svm,
       kmeans_based_GPSVM,
@@ -156,15 +157,15 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
       mlp_classifier,
       xgboost_classifier,
       support_vector_classifier,
-      profile_svm,
-      knn
+      profile_svm
   ]
-  paras = [param_grid_pujol, 
+  paras = [
+  param_grid_knn,
+  param_grid_pujol, 
   param_grid_LSVM, param_grid_GPSVM_Kmeans, param_grid_GPSVM_Hier, param_grid_rf, param_grid_MLP, 
   param_grid_xgb, 
   param_grid_SVM,
-  param_grid_PSVM,
-  param_grid_knn
+  param_grid_PSVM
   ]
   
   accuracyMatrixTrain = np.zeros( shape = (repeat, len(Classifier)) )
