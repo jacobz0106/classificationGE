@@ -111,7 +111,7 @@ class POFdarts(object):
 			while i < N:
 				newPoint = self.lineDartSample(dim,args)
 				if newPoint is None:
-					print('decrease')
+					print('missed, decrease')
 					self.CONST_a = self.CONST_a * 3/2
 					self.radius = [r * 2/3 for r in self.radius]
 				else:
@@ -125,6 +125,16 @@ class POFdarts(object):
 					self.df.append(newPoint)
 					self.remove_overlap()
 					i = i+1
+					# import matplotlib.pyplot as plt
+					# fig = plt.figure()
+
+					# # Add a 3D subplot
+					# ax1 = fig.add_subplot()
+					# for c, l, r in zip(self.df, np.array(self.y) < self.critical_value,self.radius):
+					# 	circle = plt.Circle(c, r, facecolor = 'green' if l == 1 else 'red', edgecolor = 'black', alpha = 0.5)
+					# 	ax1.add_patch(circle)
+					# plt.scatter(np.array(self.df)[:,0],np.array(self.df)[:,1], c = np.array(self.y) < self.critical_value, cmap = 'rainbow')
+					# plt.show()
 		return
 
 
@@ -138,7 +148,7 @@ class POFdarts(object):
 			random.shuffle(dartsDim)
 			for i in dartsDim:
 				# g = [a0b0a1b2....bq]
-				g_lineSegment = np.array(args[i])
+				g_lineSegment = np.array([float(k) for k in args[i] ])
 				# remove intersections from g.
 				for diskCenter, radius,k in zip(self.df, self.radius, range(len(self.df)) ):
 					if len(g_lineSegment) ==0:
@@ -151,9 +161,9 @@ class POFdarts(object):
 					else: # overlap
 						# find the intersections [b_, a_]:
 						seg = np.sqrt(radius**2 - minDist**2)
-						
 						b_ = diskCenter[i] - seg
 						a_ = diskCenter[i] + seg
+
 						# ------------------ remove the overlap ------------------ 
 						#--Case 1: [b_, a_] are beyond a0 or bq, then does not intersect
 						indexa_ = find_index(g_lineSegment, a_)

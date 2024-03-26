@@ -162,7 +162,11 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
   paras = [
   param_grid_knn,
   param_grid_pujol, 
-  param_grid_LSVM, param_grid_GPSVM_Kmeans, param_grid_GPSVM_Hier, param_grid_rf, param_grid_MLP, 
+  param_grid_LSVM,
+  param_grid_GPSVM_Kmeans, 
+  param_grid_GPSVM_Hier, 
+  param_grid_rf, 
+  param_grid_MLP, 
   param_grid_xgb, 
   param_grid_SVM,
   param_grid_PSVM
@@ -174,7 +178,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
     print('Epoch %d' %i + '--------------------------------------' + '\n')
     if example == 'Brusselator':
       domains = [[0.7,1.5], [2.75,3.25], [0,2]]
-      dataSIP = SIP_Data(integral_3D, DQ_Dlambda_3D, 3.75, len(domains) , *domains)
+      dataSIP = SIP_Data(integral_3D, DQ_Dlambda_3D, 3.47, len(domains) , *domains)
     elif example == 'Elliptic':
       domains = [[1,5], [0.1,0.3], [0,1],[0,2]]
       dataSIP = SIP_Data(elliptic_function, elliptic_Gradient, 0, len(domains) , *domains)
@@ -190,7 +194,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
       raise Valuerror("not a valid example")
 
     if sample_crite == 'POF':
-      dataSIP.generate_POF(n = n, CONST_a = 1 ,iniPoints = 1, sampleCriteria = 'k-dDarts')
+      dataSIP.generate_POF(n = n, CONST_a = 1 ,iniPoints = 5, sampleCriteria = 'k-dDarts')
     else:
       dataSIP.generate_Uniform(n)
 
