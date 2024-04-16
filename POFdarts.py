@@ -3,6 +3,7 @@ import pandas as pd
 from scipy.linalg import eigh
 from scipy.optimize import minimize_scalar
 import random
+import statistics
 
 # ---------------------------------- MagKmeans Algorithm ---------------------------------- 
 # Code based on the pseudocode from the paper:
@@ -13,17 +14,22 @@ import random
 
 
 class POFdarts(object):
-	def __init__(self, function_y, gradient, CONST_a,  critical_value, max_iterations  = 50000, max_miss = 10000,random_state = 0):
+	def __init__(self, function_y, gradient, CONST_a,  critical_value, max_iterations  = 50000, max_miss = 10000,random_state = 0, adaptive = False, adaptiveRatio = 2):
 		'''
 		function_y takes 1 argument: tuple
 		gradient takes 1 argument: tuple
 		'''
+		self.bisection = bisection
+		self.bisection_critical_value = bisection_critical_value
 		self.function_y = function_y
+		self.adaptive = adaptive
+		self.adaptiveRatio = adaptiveRatio
 		self.gradient = gradient
 		self.CONST_a = CONST_a
-		self.critical_value = critical_value
+		self.critical_value = float(critical_value)
 		self.max_iterations = max_iterations
 		self.max_miss = max_miss
+		self.max_d = 0.0
 		self.seed = random_state
 		# data frame is a list object
 		self.df = []
@@ -49,7 +55,48 @@ class POFdarts(object):
 					L = np.abs( np.array(self.y[i]) -  np.array(self.y[j]) )/np.linalg.norm(np.array(self.df[i]) - np.array(self.df[j]) )
 					self.radius[i] =  min(self.radius[i],  np.abs( np.array(self.y[i]) - self.critical_value)/L)
 					self.radius[j] =  min(self.radius[j],np.abs( np.array(self.y[j]) - self.critical_value)/L)
+
+					
+					self.max_d = np.max(np.abs(np.array(self.y) - self.critical_value) )
+					if self.radius[i] < self.radius[j]:
+						#p = np.exp(- np.abs(self.y[j] - self.critical_value)/self.max_d)
+						p = 1 - np.exp(- np.abs(self.radius[j] - self.radius[i])/self.radius[i])
+						if random.random() < p:
+							self.radius[j] = self.radius[j] * 2/3
+					else:
+						p = 1 - np.exp(- np.abs(self.radius[i] - self.radius[j])/self.radius[j])
+						if random.random() < p:
+							self.radius[i] = self.radius[i] * 2/3
 		return
+
+	def addpoint(self, newPoint):
+		z = self.function_y(np.array(newPoint))
+		self.y.append(z)
+		Q = self.gradient(newPoint)
+		self.Q.append(Q)
+		if self.adaptive:
+			z = self.function_y(np.array(newPoint))
+			if np.abs(z - self.critical_value) > self.max_d:
+				self.max_d = np.abs(z - self.critical_value)
+				self.update_radius()
+			a = self.CONST_a + self.adaptiveRatio*np.abs(z - self.critical_value)/self.max_d
+			r= np.abs(z - self.critical_value)/( a *np.linalg.norm(Q) )
+			self.radius.append(r)
+			self.df.append(newPoint)
+		else:	
+			r = np.abs(z - self.critical_value)/( self.CONST_a*np.linalg.norm(Q))
+			self.radius.append(r)
+			self.df.append(newPoint)
+		self.remove_overlap()
+
+	def update_radius(self):
+		if self.adaptive:
+			for i, r in enumerate(self.radius):
+				a = self.CONST_a + self.adaptiveRatio*np.abs(self.y[i] - self.critical_value)/self.max_d
+				self.radius[i]= np.abs(self.y[i] - self.critical_value)/( a *np.linalg.norm(self.Q[i]) )
+		else:
+			self.radius = [r * 2/3 for r in self.radius]
+
 
 
 	def Initialize(self, iniPoints,  dim, args):
@@ -68,12 +115,17 @@ class POFdarts(object):
 
 		self.df = points 
 		self.y = pd.DataFrame(self.df).apply(self.function_y, axis = 1).values.tolist()
+		self.max_d = np.max(np.abs(np.array(self.y) - self.critical_value) )
 		# calculate gradient
 		self.radius= np.zeros(iniPoints)
 		for i in range(iniPoints):
 			Q = self.gradient(self.df[i])
 			self.Q.append(Q)
-			self.radius[i]= np.abs(self.y[i] - self.critical_value)/( self.CONST_a *np.linalg.norm(Q) )
+			if self.adaptive == True:
+				a = self.CONST_a + self.adaptiveRatio*np.abs(self.y[i] - self.critical_value)/self.max_d
+				self.radius[i]= np.abs(self.y[i] - self.critical_value)/( a *np.linalg.norm(Q) )
+			else:
+				self.radius[i]= np.abs(self.y[i] - self.critical_value)/( self.CONST_a *np.linalg.norm(Q) )
 		self.radius = self.radius.tolist()
 		self.remove_overlap()
 
@@ -95,47 +147,24 @@ class POFdarts(object):
 				if counter == self.max_iterations:
 					print('decrease')
 					self.CONST_a = self.CONST_a * 3/2
-					self.radius = [r * 2/3 for r in self.radius]
+					self.update_radius()
 				# else found point to add
 				else:
-					z = self.function_y(np.array(newPoint))
-					self.y.append(z)
-					Q = self.gradient(newPoint)
-					self.Q.append(Q)
-					r = np.abs(z - self.critical_value)/( self.CONST_a*np.linalg.norm(Q))
-					self.radius.append(r)
-					self.df.append(newPoint)
-					self.remove_overlap()
+					self.addpoint(newPoint)
 					i = i+1
 		else:
 			while i < N:
 				newPoint = self.lineDartSample(dim,args)
 				if newPoint is None:
 					print('missed, decrease')
+					print(self.radius)
 					self.CONST_a = self.CONST_a * 3/2
-					self.radius = [r * 2/3 for r in self.radius]
+					self.update_radius()
 				else:
 					newPoint = newPoint.tolist()
-					z = self.function_y(np.array(newPoint))
-					self.y.append(z)
-					Q = self.gradient(newPoint)
-					self.Q.append(Q)
-					r = np.abs(z - self.critical_value)/( self.CONST_a*np.linalg.norm(Q))
-					self.radius.append(r)
-					self.df.append(newPoint)
-					self.remove_overlap()
+					self.addpoint(newPoint)
 					i = i+1
-					# import matplotlib.pyplot as plt
-					# fig = plt.figure()
-
-					# # Add a 3D subplot
-					# ax1 = fig.add_subplot()
-					# for c, l, r in zip(self.df, np.array(self.y) < self.critical_value,self.radius):
-					# 	circle = plt.Circle(c, r, facecolor = 'green' if l == 1 else 'red', edgecolor = 'black', alpha = 0.5)
-					# 	ax1.add_patch(circle)
-					# plt.scatter(np.array(self.df)[:,0],np.array(self.df)[:,1], c = np.array(self.y) < self.critical_value, cmap = 'rainbow')
-					# plt.show()
-		return
+		return 0
 
 
 
@@ -206,7 +235,7 @@ class POFdarts(object):
 					return(linearDart)
 			# print('miss')
 			totalmiss += 1
-		return None
+		return 0
 
 
 

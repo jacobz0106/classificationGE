@@ -11,7 +11,7 @@ import warnings
 warnings.filterwarnings("ignore", message="`use_label_encoder` is deprecated in 1.7.0.")
 
 from xgboost import XGBClassifier
-from CBP import referenced_method, LSVM, PSVM, GPSVM
+from CBP import referenced_method, LSVM, PSVM, GPSVM, GMSVM
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.neighbors import KNeighborsClassifier
 import sys
@@ -101,7 +101,11 @@ param_grid_GPSVM_Hier = {
 }
 
 
-
+param_grid_GMSVM = {      
+    'ensembleNum': [1, 3, 5, 7], 
+    'C':[0.01, 0.1,0.5,1,5],     
+    'clusterSize': [2,3,5,7,10] 
+  }
 
 
 def perform_grid_search_cv(model, param_grid, X, y, cv=5):
@@ -140,7 +144,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
   reference_classifier = referenced_method()
   localized_linear_svm = LSVM()
   kmeans_based_GPSVM = GPSVM(method="KMeans")
-  hierarchical_clustering_GPSVM = GPSVM(method='hierarchicalClustering')
+  GMSVM_model = GMSVM()
   random_forest = RandomForestClassifier()
   mlp_classifier = MLPClassifier()
   xgboost_classifier = XGBClassifier(use_label_encoder=False, eval_metric='logloss')
@@ -153,7 +157,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
       reference_classifier,
       localized_linear_svm,
       kmeans_based_GPSVM,
-      hierarchical_clustering_GPSVM,
+      GMSVM_model,
       random_forest,
       mlp_classifier,
       xgboost_classifier,
@@ -165,7 +169,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
   param_grid_pujol, 
   param_grid_LSVM,
   param_grid_GPSVM_Kmeans, 
-  param_grid_GPSVM_Hier, 
+  param_grid_GMSVM, 
   param_grid_rf, 
   param_grid_MLP, 
   param_grid_xgb, 
