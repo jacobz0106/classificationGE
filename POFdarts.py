@@ -19,8 +19,6 @@ class POFdarts(object):
 		function_y takes 1 argument: tuple
 		gradient takes 1 argument: tuple
 		'''
-		self.bisection = bisection
-		self.bisection_critical_value = bisection_critical_value
 		self.function_y = function_y
 		self.adaptive = adaptive
 		self.adaptiveRatio = adaptiveRatio
