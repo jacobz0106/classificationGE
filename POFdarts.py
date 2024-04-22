@@ -14,14 +14,16 @@ import statistics
 
 
 class POFdarts(object):
-	def __init__(self, function_y, gradient, CONST_a,  critical_value, max_iterations  = 50000, max_miss = 10000,random_state = 0, adaptive = False, adaptiveRatio = 2):
+	def __init__(self, function_y, gradient, CONST_a,  critical_value, lower_bound = 0.01,max_iterations  = 50000, max_miss = 10000,random_state = 0, adaptive = False, adaptiveRatio = 2, shrink_ratio = None):
 		'''
 		function_y takes 1 argument: tuple
 		gradient takes 1 argument: tuple
 		'''
 		self.function_y = function_y
+		self.lower_bound = 0.01
 		self.adaptive = adaptive
 		self.adaptiveRatio = adaptiveRatio
+		self.shrink_ratio = shrink_ratio
 		self.gradient = gradient
 		self.CONST_a = CONST_a
 		self.critical_value = float(critical_value)
@@ -43,6 +45,7 @@ class POFdarts(object):
 		return False
 
 	def remove_overlap(self):
+		# complete overlap
 		index = np.array(self.y) < self.critical_value
 		I = [i for i, x in enumerate(index) if x]
 		indexInv = [not i for i in index]
@@ -54,17 +57,19 @@ class POFdarts(object):
 					self.radius[i] =  min(self.radius[i],  np.abs( np.array(self.y[i]) - self.critical_value)/L)
 					self.radius[j] =  min(self.radius[j],np.abs( np.array(self.y[j]) - self.critical_value)/L)
 
-					
-					self.max_d = np.max(np.abs(np.array(self.y) - self.critical_value) )
-					if self.radius[i] < self.radius[j]:
-						#p = np.exp(- np.abs(self.y[j] - self.critical_value)/self.max_d)
-						p = 1 - np.exp(- np.abs(self.radius[j] - self.radius[i])/self.radius[i])
-						if random.random() < p:
-							self.radius[j] = self.radius[j] * 2/3
-					else:
-						p = 1 - np.exp(- np.abs(self.radius[i] - self.radius[j])/self.radius[j])
-						if random.random() < p:
-							self.radius[i] = self.radius[i] * 2/3
+					if self.shrink_ratio is not None:
+						self.max_d = np.max(np.abs(np.array(self.y) - self.critical_value) )
+
+						#according to probability
+						p_j = 1 - np.exp(-np.abs(self.y[j] - self.critical_value)/(self.max_d*0.3) )*np.exp(-np.abs(self.radius[j] - self.radius[i])/self.radius[i])
+						if random.random() < p_j:
+							self.radius[j] = self.radius[j] * self.shrink_ratio
+
+						p_i = 1 - np.exp(-np.abs(self.y[i] - self.critical_value)/(self.max_d*0.3))*np.exp(-np.abs(self.radius[i] - self.radius[j])/self.radius[j])
+						if random.random() < p_i:
+							self.radius[i] = self.radius[i] * self.shrink_ratio
+
+						#strategically:
 		return
 
 	def addpoint(self, newPoint):
@@ -77,12 +82,12 @@ class POFdarts(object):
 			if np.abs(z - self.critical_value) > self.max_d:
 				self.max_d = np.abs(z - self.critical_value)
 				self.update_radius()
-			a = self.CONST_a + self.adaptiveRatio*np.abs(z - self.critical_value)/self.max_d
-			r= np.abs(z - self.critical_value)/( a *np.linalg.norm(Q) )
+			a = np.exp(np.abs(z - self.critical_value)/self.max_d )
+			r= np.abs(z - self.critical_value)/( a * np.max([np.linalg.norm(Q),self.lower_bound]) )
 			self.radius.append(r)
 			self.df.append(newPoint)
 		else:	
-			r = np.abs(z - self.critical_value)/( self.CONST_a*np.linalg.norm(Q))
+			r = np.abs(z - self.critical_value)/( self.CONST_a*np.max([np.linalg.norm(Q),self.lower_bound]))
 			self.radius.append(r)
 			self.df.append(newPoint)
 		self.remove_overlap()
@@ -90,8 +95,9 @@ class POFdarts(object):
 	def update_radius(self):
 		if self.adaptive:
 			for i, r in enumerate(self.radius):
-				a = self.CONST_a + self.adaptiveRatio*np.abs(self.y[i] - self.critical_value)/self.max_d
-				self.radius[i]= np.abs(self.y[i] - self.critical_value)/( a *np.linalg.norm(self.Q[i]) )
+				a = np.exp(np.abs(self.y[i] - self.critical_value)/self.max_d )
+				if self.radius[i] > np.abs(self.y[i] - self.critical_value)/( a *np.max([np.linalg.norm(self.Q[i]),self.lower_bound]) ):
+					self.radius[i]= np.abs(self.y[i] - self.critical_value)/( a *np.max([np.linalg.norm(self.Q[i]),self.lower_bound]) )
 		else:
 			self.radius = [r * 2/3 for r in self.radius]
 

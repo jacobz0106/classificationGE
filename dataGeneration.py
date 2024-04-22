@@ -507,10 +507,10 @@ class SIP_Data(object):
 		self.df['f'] = Z
 		
 
-	def generate_POF(self,n,CONST_a ,iniPoints = 10, max_iterations  = 1000, max_miss = 1000,sampleCriteria = 'k-dDarts', Initialization = True, adaptive = False, adaptiveRatio = 2):
+	def generate_POF(self,n,CONST_a ,iniPoints = 10, max_iterations  = 1000, max_miss = 1000,sampleCriteria = 'k-dDarts', Initialization = True, adaptive = False, adaptiveRatio = 2, shrink_ratio = None):
 		if Initialization == True:
 			self.POFdarts = POFdarts( self.function_y, self.function_gradient , CONST_a,  self.CONST_threshold , max_iterations  = max_iterations, max_miss = max_miss, adaptive = adaptive,
-				adaptiveRatio = adaptiveRatio)
+				adaptiveRatio = adaptiveRatio, shrink_ratio = shrink_ratio)
 			self.POFdarts.Initialize(iniPoints, self.dim , self.domain)
 		self.POFdarts.Generate_data( n - iniPoints, self.dim , self.domain, sampleCriteria = sampleCriteria)
 		self.Gradient = self.POFdarts.Q

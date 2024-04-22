@@ -104,7 +104,7 @@ param_grid_GPSVM_Hier = {
 param_grid_GMSVM = {      
     'ensembleNum': [1, 3, 5, 7], 
     'C':[0.01, 0.1,0.5,1,5],     
-    'clusterSize': [2,3,5,7,10] 
+    'clusterSize': [1, 2,3,4,5,6,7,10] 
   }
 
 
@@ -199,7 +199,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
       raise Valuerror("not a valid example")
 
     if sample_crite == 'POF':
-      dataSIP.generate_POF(n = n, CONST_a = 1 ,iniPoints = 5, sampleCriteria = 'k-dDarts')
+      dataSIP.generate_POF(n = n, CONST_a = 1 ,iniPoints = 10, sampleCriteria = 'k-dDarts', ,adaptive = True, shrink_ratio = 2/3)
     else:
       dataSIP.generate_Uniform(n)
 
