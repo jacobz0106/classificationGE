@@ -104,7 +104,7 @@ param_grid_GPSVM_Hier = {
 param_grid_GMSVM = {      
     'ensembleNum': [1, 3, 5, 7], 
     'C':[0.01, 0.1,0.5,1,5],     
-    'clusterSize': [1, 2,3,4,5,6,7,10] 
+    'clusterSize': [2,4,6,8,10,12,14,20] 
   }
 
 
