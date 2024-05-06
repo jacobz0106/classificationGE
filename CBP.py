@@ -394,10 +394,9 @@ class GMSVM(object):
 
 		for midpoint in self.cbp.midpoints:
 			nearest_index = find_k_nearest_points(self.clusterSize ,midpoint,self.cbp.midpoints)
-			Gabriel_pairs = np.array(self.cbp.points)[nearest_index]
-			subset_index = Gabriel_pairs.reshape(-1)
+			GE_point_index = np.unique(np.array(self.cbp.points)[nearest_index].reshape(-1))
 			model = svm.SVC(kernel='linear', C = self.C)
-			model.fit(self.A_train[subset_index], self.C_train[subset_index])
+			model.fit(self.A_train[GE_point_index], self.C_train[GE_point_index])
 			self.SVM.append(model)
 
 	def ensemble(self, x):
