@@ -63,7 +63,7 @@ def find_k_nearest_points(k, point, points):
     try:
       index_self = np.where(np.all(points == point, axis=1))[0]
       # Set the distance of the point itself to a very high value
-      dists[index_self] = np.inf
+      dists[index_self] = 0
     except IndexError:
       pass  # The point is not in the list or cannot be exactly matched
 
@@ -393,7 +393,7 @@ class GMSVM(object):
 		# define the clusters 
 
 		for midpoint in self.cbp.midpoints:
-			nearest_index = find_k_nearest_points(self.clusterSize ,midpoint,self.cbp.midpoints)
+			nearest_index = find_k_nearest_points(self.clusterSize,midpoint,self.cbp.midpoints)
 			GE_point_index = np.unique(np.array(self.cbp.points)[nearest_index].reshape(-1))
 			model = svm.SVC(kernel='linear', C = self.C)
 			model.fit(self.A_train[GE_point_index], self.C_train[GE_point_index])
@@ -431,130 +431,7 @@ class GMSVM(object):
 			return self
 
 
-# ---------------------------------- GMSVM Algorithm with linear regression---------------------------------- 
 
-class GMLRG(object):
-	def __init__(self, method, clusterNum = 1,ensembleNum=1,C = 0.1, CONST_C = 1, midPointCriteria = 'average'):
-
-		self.cbp = []
-		self.clusterNum = clusterNum
-		self.midPointCriteria = midPointCriteria
-		self.method = method
-		self.clusterCentroids = []
-		self.ensembleNum = ensembleNum
-		self.C = C 
-		self.CONST_C = CONST_C
-		self.clusters = []
-		self.LRG = []
-
-
-	def _train(self, A_train, C_train):
-		# Check if the input C_train is a numpy array contaning -1 and 1
-		valid_values = {-1, 1} 
-		if isinstance(C_train, (list, np.ndarray)):
-			unique_values = set(C_train)
-			if not (valid_values.issubset(unique_values) and len(unique_values) == 2):
-				raise ValueError("Input array must contain both -1 and 1.")
-		else:
-			raise ValueError("Input must be a list or a numpy array.")
-		#[0,1] -> [1, -1]
-		self.transformer = LabelEncode([-1,1])
-		self.transformer.fit(C_train)
-		self.C_train = self.transformer.transform(C_train)
-
-		self.A_train = A_train
-		self.cbp = CBP(A_train, C_train)
-		self.d = len(A_train[0])
-		self.clusterLabel = []
-
-
-	def fit(self, A_train, C_train, dQ = None, mapping_Q = None, critical_value = None):
-		'''
-		cluster = hierarchicalClustering or Kmeans
-		'''
-		self.LRG = []
-		self.cbp = []
-		self.clusters = []
-		self.clusterCentroids = []
-		self._train(A_train, C_train)
-		# cbp count -> clusters
-		if self.midPointCriteria != 'average':
-			self.cbp.midpoints = []
-			for pair in self.cbp.points:
-				# scaled ...
-				midpoint = (critical_value - mapping_Q[pair[1]])/(mapping_Q[pair[0]] - mapping_Q[pair[1]]) * (A_train[pair[0]] - A_train[pair[1]]) + A_train[pair[1]]
-				self.midpoints.append( midpoint)
-
-
-		# update midpoints
-		if self.cbp.count < self.clusterNum:
-			self.clusterNum = self.cbp.count
-		if self.method == "hierarchicalClustering":
-			self.clusters = hierarchicalClustering.hierarchicalClustering(n_clusters=self.clusterNum, CONST_C = self.CONST_C, random_state=0)
-			
-
-			# take gradient as the average of the Gabriel neighbors
-
-			Gradient_i = np.array(dQ)[np.array(self.cbp.points)[:,0] ]
-			Gradient_i_norm = np.array( [ i /np.linalg.norm(i) for i in Gradient_i   ] )
-
-			Gradient_j = np.array(dQ)[np.array(self.cbp.points)[:,1] ]
-			Gradient_j_norm = np.array( [ i /np.linalg.norm(i) for i in Gradient_j   ] )
-			estimated_Gradient =   (Gradient_i_norm   +   Gradient_j_norm)/2
-			self.clusters.fit(np.array(self.cbp.midpoints), estimated_Gradient) 
-		else:
-			self.clusters = cluster.KMeans(n_clusters = self.clusterNum, n_init = 'auto')
-			self.clusters.fit(np.array(self.cbp.midpoints))
-		self.clusterCentroids = self.clusters.cluster_centers_
-		self.clusterLabel= np.unique(self.clusters.labels_)
-		# check if all clusters are generated
-		if self.clusterNum > len(np.unique(self.clusters.labels_)):
-			self.clusterNum = len(np.unique(self.clusters.labels_))
-		if self.ensembleNum > self.clusterNum:
-			self.ensembleNum = self.clusterNum
-		for i in range(self.clusterNum):
-			midpoints_subset_index = self.clusters.labels_ == self.clusterLabel[i]
-			Gabriel_pairs = np.array(self.cbp.points)[midpoints_subset_index]
-			subset_index = Gabriel_pairs.reshape(-1)
-
-			# linear regression on the midpoints.
-			mpCluster = self.cbp.midpoints[midpoints_subset_index]
-
-			model = svm.SVC(kernel='linear', C = self.C)
-			model.fit(self.A_train[subset_index], self.C_train[subset_index])
-			self.SVM.append(model)
-
-	def ensemble(self, x):
-		I = Euclidean_distance_vector(x,self.clusterCentroids)
-		index = I.argsort()[0:self.ensembleNum]
-		classifier = 0.0
-		for i in range(len(index)):
-			j = index[i]
-
-			weight = 1/I[index[i]]/(np.sum(1/I[index]))
-			classifier = classifier + weight*self.SVM[j].predict([x])
-		if classifier >= 0:
-			return 1
-		else:
-			return -1
-	def predict(self,x):
-		ensembleVec = np.vectorize(self.ensemble, signature = '(n)->()')
-		predict = np.array(ensembleVec(np.array(x).reshape(-1,self.d))).reshape(-1)
-		#[1,-1] -> [0, 1]
-		return self.transformer.transform_back(predict)
-
-	def get_params(self,deep=True):
-			return {"clusterNum" : self.clusterNum,
-			"ensembleNum" : self.ensembleNum,
-			"C": self.C,
-			"method": self.method,
-			"CONST_C":self.CONST_C}
-
-	def set_params(self, **parameters):
-			# for parameter, value in parameters.items():
-			#     setattr(self, parameter, value)
-			self.__init__(**parameters)
-			return self
 
 # ---------------------------------- LSVM Algorithm ---------------------------------- 
 # Code based on the pseudocode from the paper:
