@@ -18,6 +18,10 @@ import sys
 
 
 #### Parameter definition:
+# Working on:
+# normalize the SVM,
+# linear SVM with penalty terms
+
 
 ## - Random Forest:
 param_grid_rf = {
@@ -104,7 +108,7 @@ param_grid_GPSVM_Hier = {
 param_grid_GMSVM = {      
     'ensembleNum': [1, 3, 5, 7], 
     'C':[0.01, 0.1,0.5,1,5],     
-    'clusterSize': [2,4,6,8,10,12,14,20] 
+    'clusterSize': [2,3,4,6,8,10,12,14,20] 
   }
 
 
@@ -144,7 +148,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
   reference_classifier = referenced_method()
   localized_linear_svm = LSVM()
   kmeans_based_GPSVM = GPSVM(method="KMeans")
-  GMSVM_model = GMSVM()
+  # GMSVM_model = GMSVM()
   random_forest = RandomForestClassifier()
   mlp_classifier = MLPClassifier()
   xgboost_classifier = XGBClassifier(use_label_encoder=False, eval_metric='logloss')
@@ -157,7 +161,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
       reference_classifier,
       localized_linear_svm,
       kmeans_based_GPSVM,
-      GMSVM_model,
+      # GMSVM_model,
       random_forest,
       mlp_classifier,
       xgboost_classifier,
@@ -169,7 +173,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
   param_grid_pujol, 
   param_grid_LSVM,
   param_grid_GPSVM_Kmeans, 
-  param_grid_GMSVM, 
+  # param_grid_GMSVM, 
   param_grid_rf, 
   param_grid_MLP, 
   param_grid_xgb, 
