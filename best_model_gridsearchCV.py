@@ -272,7 +272,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
 
 def main():
   if len(sys.argv) != 5:
-    raise ValuError('not enough argument')
+    raise ValueError('not enough argument')
 
   # train size, test size, example name = [Brusselator, Elliptic, Function1, Function2], sample method 
   train_size, test_size, example_name, sample_method = sys.argv[1:5]
