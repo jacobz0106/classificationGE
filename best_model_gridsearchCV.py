@@ -106,9 +106,10 @@ param_grid_GPSVM_Hier = {
 
 
 param_grid_GMSVM = {      
-    'ensembleNum': [1, 3, 5, 7], 
+    'ensembleNum': [1, 3, 5], 
     'C':[0.01, 0.1,0.5,1,5],     
-    'clusterSize': [2,3,4,6,8,10,12,14,20] 
+    'clusterSize': [2,3,4,6,8,10],
+    'K':[0,1,5,10] 
   }
 
 
@@ -148,7 +149,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
   reference_classifier = referenced_method()
   localized_linear_svm = LSVM()
   kmeans_based_GPSVM = GPSVM(method="KMeans")
-  # GMSVM_model = GMSVM()
+  GMSVM_model = GMSVM()
   random_forest = RandomForestClassifier()
   mlp_classifier = MLPClassifier()
   xgboost_classifier = XGBClassifier(use_label_encoder=False, eval_metric='logloss')
@@ -161,7 +162,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
       reference_classifier,
       localized_linear_svm,
       kmeans_based_GPSVM,
-      # GMSVM_model,
+      GMSVM_model,
       random_forest,
       mlp_classifier,
       xgboost_classifier,
@@ -173,7 +174,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
   param_grid_pujol, 
   param_grid_LSVM,
   param_grid_GPSVM_Kmeans, 
-  # param_grid_GMSVM, 
+  param_grid_GMSVM, 
   param_grid_rf, 
   param_grid_MLP, 
   param_grid_xgb, 
@@ -200,10 +201,10 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
       domains = [[-1,1], [-1,1] ]
       dataSIP = SIP_Data(function2, Gradient_f2, 1, len(domains) , *domains)
     else:
-      raise Valuerror("not a valid example")
+      raise ValueError("not a valid example")
 
     if sample_crite == 'POF':
-      dataSIP.generate_POF(n = n, CONST_a = 1 ,iniPoints = 10, sampleCriteria = 'k-dDarts', adaptive = True, shrink_ratio = 2/3)
+      dataSIP.generate_POF(n = n, CONST_a = 1 ,iniPoints = 10, sampleCriteria = 'k-dDarts')
     else:
       dataSIP.generate_Uniform(n)
 
@@ -255,6 +256,21 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
         else:
           model = GPSVM(method = "KMeans")
           best_model = perform_grid_search_cv(model, para, X_train,y_train)
+          trainAccuracy = np.sum(best_model.predict(X_train) == y_train)/len(y_train)
+          predictionAccuracy = np.sum(best_model.predict(X_test) == y_test)/len(y_test)
+          accuracyMatrixTrain[i, k] =  trainAccuracy
+          accuracyMatrixPrediction[i, k] = predictionAccuracy
+          print('training samples, best model has train accuracy: %f' %trainAccuracy + ' prediction accuracy:%f' %predictionAccuracy + '\n')
+      elif isinstance(model, GMSVM):
+          fit_para = {'dQ':dQ}
+          grid_search = GridSearchCV(model, para, cv=5, scoring='accuracy', verbose = 1)
+
+          # Fit the grid search to the data
+          grid_search.fit(X_train, y_train, **fit_para)
+
+          # Get the best model with tuned hyperparameters
+          best_model = grid_search.best_estimator_
+          print(best_model.get_params())
           trainAccuracy = np.sum(best_model.predict(X_train) == y_train)/len(y_train)
           predictionAccuracy = np.sum(best_model.predict(X_test) == y_test)/len(y_test)
           accuracyMatrixTrain[i, k] =  trainAccuracy

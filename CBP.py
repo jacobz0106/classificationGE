@@ -13,6 +13,7 @@ from sklearn import cluster
 from sklearn import svm
 from PSVM import MagKmeans
 import hierarchicalClustering
+from SVM_Penalized import SVM_Penalized
 # from sklearn.base import BaseEstimator, ClassifierMixin
 
 class LabelEncode(object):
@@ -343,7 +344,7 @@ class GPSVM(object):
 # ---------------------------------- GMSVM Algorithm with clusters_overlap---------------------------------- 
 
 class GMSVM(object):
-	def __init__(self, clusterSize = 3,ensembleNum=1,C = 0.1, CONST_C = 1):
+	def __init__(self, clusterSize = 3,ensembleNum=1,C = 0.1, CONST_C = 1, K = 1):
 
 		self.cbp = []
 		self.clusterSize = clusterSize
@@ -351,6 +352,7 @@ class GMSVM(object):
 		self.ensembleNum = ensembleNum
 		self.clusterNum  = 0
 		self.C = C 
+		self.K = K
 		self.clusters = []
 		self.CONST_C = CONST_C
 		self.clusters = []
@@ -395,8 +397,8 @@ class GMSVM(object):
 		for midpoint in self.cbp.midpoints:
 			nearest_index = find_k_nearest_points(self.clusterSize,midpoint,self.cbp.midpoints)
 			GE_point_index = np.unique(np.array(self.cbp.points)[nearest_index].reshape(-1))
-			model = svm.SVC(kernel='linear', C = self.C)
-			model.fit(self.A_train[GE_point_index], self.C_train[GE_point_index])
+			model = SVM_Penalized(C = self.C, K = self.K)
+			model.fit(self.A_train[GE_point_index], self.C_train[GE_point_index], dQ)
 			self.SVM.append(model)
 
 	def ensemble(self, x):
