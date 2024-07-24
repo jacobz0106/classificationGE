@@ -93,7 +93,7 @@ param_grid_GPSVM_Kmeans = {
   'method' : ["KMeans"], 
   'clusterNum':  [ 5,10,12, 15,20],        
   'ensembleNum': [1, 3, 5, 7], 
-  'C':[0.01, 0.1,0.5,1,5],      
+  'C':[ 0.1,1,5, 10],      
 }
 
 param_grid_GPSVM_Hier = {
@@ -107,9 +107,9 @@ param_grid_GPSVM_Hier = {
 
 param_grid_GMSVM = {      
     'ensembleNum': [1, 3, 5], 
-    'C':[0.01, 0.1,0.5,1,5],     
-    'clusterSize': [2,3,4,6,8,10],
-    'K':[0,1,5,10] 
+    'C':[ 0.1,1,5, 10],     
+    'clusterSize': [2,4,8,10],
+    'K':[0,1,10, 20, 50] 
   }
 
 
