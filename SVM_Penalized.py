@@ -3,6 +3,7 @@ import gurobipy as gp
 import cvxpy as cp
 import numpy as np
 
+from sklearn import svm
 
 import matplotlib.pyplot as plt
 
@@ -16,6 +17,8 @@ class SVM_Penalized(object):
 		self.w = []
 		self.b = []
 		self.alpha =[]
+		self.coef_ = []           # w consists of 2 elements
+		self.intercept_ = [] 
 
 	def fit_SVM(self, A_train, C_train, dQ = None):
 		if dQ is None:
@@ -90,13 +93,13 @@ class SVM_Penalized(object):
 		w_2 = np.array(np.mean(dQ, axis = 0)/np.linalg.norm(np.mean(dQ, axis = 0),2))
 		w_1_proj_2 =  w_1 @ w_2.T/(w_2 @ w_2.T) * w_2
 
-
-		t = (quicksum( alpha[j]*(w_1 - w_2)@A_train[j].T*C_train[j]  for j in range(n)) - (w_1 - w_2)@w_2.T)/((w_1 - w_2)@(w_1 - w_2).T)
-		m.addConstr((quicksum( alpha[j]*(w_1 - w_2)@A_train[j].T*C_train[j]  for j in range(n)) - (w_1 - w_2)@w_2.T)/((w_1 - w_2)@(w_1 - w_2).T) >= 0)
-		m.addConstr((quicksum( alpha[j]*(w_1 - w_2)@A_train[j].T*C_train[j]  for j in range(n)) - (w_1 - w_2)@w_2.T)/((w_1 - w_2)@(w_1 - w_2).T) <= 1)
+		penalty = self.K*( 1 - (w_1 @ w_2.T)**2/(w_1 @ w_1.T) )
+		t = (quicksum( alpha[j]*(w_1 - w_1_proj_2)@A_train[j].T*C_train[j]  for j in range(n)) - (w_1 - w_1_proj_2)@w_1_proj_2.T - penalty)/((w_1 - w_1_proj_2)@(w_1 - w_1_proj_2).T)
+		m.addConstr((quicksum( alpha[j]*(w_1 - w_1_proj_2)@A_train[j].T*C_train[j]  for j in range(n)) - (w_1 - w_1_proj_2)@w_1_proj_2.T)/((w_1 - w_1_proj_2)@(w_1 - w_1_proj_2).T) >= 0)
+		m.addConstr((quicksum( alpha[j]*(w_1 - w_1_proj_2)@A_train[j].T*C_train[j]  for j in range(n)) - (w_1 - w_1_proj_2)@w_1_proj_2.T)/((w_1 - w_1_proj_2)@(w_1 - w_1_proj_2).T) <= 1)
 		w_t = t*w_1 + (1 - t)*w_1_proj_2
 
-		objective = quicksum(alpha[j] for j in range(n)) + 0.5*w_t@w_t.T - quicksum( alpha[j]*w_t@A_train[j].T*C_train[j] for j in range(n))
+		objective = quicksum(alpha[j] for j in range(n)) + 0.5*w_t@w_t.T + penalty*t - quicksum( alpha[j]*w_t@A_train[j].T*C_train[j] for j in range(n))
 
 
 		m.setObjective(objective, GRB.MAXIMIZE)
@@ -114,7 +117,7 @@ class SVM_Penalized(object):
 			gp_env.dispose()
 
 
-		t = (np.sum( [alpha_[j]*(w_1 - w_2)@A_train[j].T*C_train[j]  for j in range(n)] ) - (w_1 - w_2)@w_2.T)/((w_1 - w_2)@(w_1 - w_2).T)
+		t = (np.sum( [alpha_[j]*(w_1 - w_1_proj_2)@A_train[j].T*C_train[j]  for j in range(n)] ) - (w_1 - w_1_proj_2)@w_1_proj_2.T - penalty )/((w_1 - w_1_proj_2)@(w_1 - w_1_proj_2).T)
 
 		w = t*w_1 + (1 - t)*w_1_proj_2
 
@@ -134,6 +137,16 @@ class SVM_Penalized(object):
 		else:
 			b = 0
 		self.b = b
+		self.coef_.append(self.w)           # w consists of 2 elements
+		self.intercept_.append(self.b)
+
+
+		self.svm = svm.SVC(kernel='linear', C = self.C)
+
+		# check if cluster has more than two label:
+		self.svm.fit(A_train, C_train)
+
+
 
 	def predict(self, A_train):
 		return( np.array([1 if np.sum(self.w*A_train[j]) + self.b >= 0 else -1   for j in range(len(A_train))]) )
