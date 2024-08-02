@@ -74,7 +74,7 @@ param_grid_pujol = {
 ## - LSVM:
 param_grid_LSVM = {
   'K':  [ 5,10,15,20],        
-  'C': [0.1, 1,1.5, 3,5],               
+  'C': [1,5,10,100, 500, 1000,2000],               
 }
 
 
@@ -82,8 +82,8 @@ param_grid_LSVM = {
 
 param_grid_PSVM = {
   'clusterNum':  [ 5,10,12, 15,20],        
-  'ensembleNum': [1, 5, 10], 
-  'C':[0.05, 0.1,  0.5,1,5,10],   
+  'ensembleNum': [1, 3, 5, 7], 
+  'C':[1,5,10,100, 500, 1000,2000],   
   'R':[0, 0.1,0.5,1,5],
   'max_iterations': [100],            
 }
@@ -93,23 +93,23 @@ param_grid_GPSVM_Kmeans = {
   'method' : ["KMeans"], 
   'clusterNum':  [ 5,10,12, 15,20],        
   'ensembleNum': [1, 3, 5, 7], 
-  'C':[ 0.1,1,5, 10],      
+  'C':[1,5,10,100, 500, 1000,2000],      
 }
 
-param_grid_GPSVM_Hier = {
-  'clusterNum':  [ 5,10,12, 15,20],        
-  'ensembleNum': [1, 3, 5, 7], 
-  'C':[0.05, 0.1, 0.5,1,5], 
-  'method' : ["hierarchicalClustering"], 
-  'CONST_C': [0.1,0.5,1,5, 10],     
-}
+# param_grid_GPSVM_Hier = {
+#   'clusterNum':  [ 5,10,12, 15,20],        
+#   'ensembleNum': [1, 3, 5, 7], 
+#   'C':[0.05, 0.1, 0.5,1,5], 
+#   'method' : ["hierarchicalClustering"], 
+#   'CONST_C': [0.1,0.5,1,5, 10],     
+# }
 
 
 param_grid_GMSVM = {      
-    'ensembleNum': [1, 3, 5], 
-    'C':[ 0.1,1,5, 10],     
-    'clusterSize': [2,4,8,10],
-    'K':[0,1,10, 20, 50] 
+'ensembleNum': [1, 3, 5], 
+'C':[1,5,10,100, 500, 1000,2000],     
+'clusterSize': [2,3,4,6,8],
+'K':[10,50,100,1000,2000] 
   }
 
 

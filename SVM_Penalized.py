@@ -90,15 +90,16 @@ class SVM_Penalized(object):
 		self.fit_SVM(A_train, C_train, dQ)
 
 		w_1 = self.w 
+		dQ = [ gradient/np.linalg.norm(gradient) for gradient in dQ]
 		w_2 = np.array(np.mean(dQ, axis = 0)/np.linalg.norm(np.mean(dQ, axis = 0),2))
 		w_1_proj_2 =  w_1 @ w_2.T/(w_2 @ w_2.T) * w_2
+		w_1_proj_2 = w_1_proj_2/np.linalg.norm(w_1_proj_2)
 
 		penalty = self.K*( 1 - (w_1 @ w_2.T)**2/(w_1 @ w_1.T) )
 		t = (quicksum( alpha[j]*(w_1 - w_1_proj_2)@A_train[j].T*C_train[j]  for j in range(n)) - (w_1 - w_1_proj_2)@w_1_proj_2.T - penalty)/((w_1 - w_1_proj_2)@(w_1 - w_1_proj_2).T)
 		m.addConstr((quicksum( alpha[j]*(w_1 - w_1_proj_2)@A_train[j].T*C_train[j]  for j in range(n)) - (w_1 - w_1_proj_2)@w_1_proj_2.T)/((w_1 - w_1_proj_2)@(w_1 - w_1_proj_2).T) >= 0)
 		m.addConstr((quicksum( alpha[j]*(w_1 - w_1_proj_2)@A_train[j].T*C_train[j]  for j in range(n)) - (w_1 - w_1_proj_2)@w_1_proj_2.T)/((w_1 - w_1_proj_2)@(w_1 - w_1_proj_2).T) <= 1)
 		w_t = t*w_1 + (1 - t)*w_1_proj_2
-
 		objective = quicksum(alpha[j] for j in range(n)) + 0.5*w_t@w_t.T + penalty*t - quicksum( alpha[j]*w_t@A_train[j].T*C_train[j] for j in range(n))
 
 
