@@ -94,7 +94,7 @@ class CBP(object):
 		self.midpoints = []
 		self.margin = []
 		if Euc_d is None:
-			self._Euc(A_train, C_train)
+			self._Euc(A_train)
 		else:
 			self.Euc_d = Euc_d
 
@@ -136,8 +136,7 @@ class CBP(object):
 					self.margin.append(self.Euc_d[i,m])
 					self.count += 1
 
-	def _Euc(self, A_train, C_train):
-		self.Euc_d = np.zeros(shape=(len(C_train),len(C_train)))
+	def _Euc(self, A_train):
 		self.Euc_d = np.array([Euclidean_distance_vector(A_i, A_train) for A_i in A_train])
 
 
@@ -344,7 +343,7 @@ class GPSVM(object):
 # ---------------------------------- GMSVM Algorithm with clusters_overlap---------------------------------- 
 
 class GMSVM(object):
-	def __init__(self, clusterSize = 3,ensembleNum=1,C = 0.1, CONST_C = 1, K = 1):
+	def __init__(self, clusterSize = 3,ensembleNum=1,C = 0.1,  K = 1):
 
 		self.cbp = []
 		self.clusterSize = clusterSize
@@ -353,8 +352,6 @@ class GMSVM(object):
 		self.clusterNum  = 0
 		self.C = C 
 		self.K = K
-		self.clusters = []
-		self.CONST_C = CONST_C
 		self.clusters = []
 		self.SVM = []
 
@@ -390,16 +387,19 @@ class GMSVM(object):
 		self._train(A_train, C_train)
 		self.clusterNum  = self.cbp.count
 		self.clusters.labels_ = np.array(range(self.clusterNum))
+		self.labels_ = np.array(range(self.clusterNum))
 		self.clusters.clusterNum = self.cbp.count
-		self.clusterCentroids = self.cbp.midpoints
+		#self.clusterCentroids = self.cbp.midpoints
+		self.clusterCentroids = []
 		# define the clusters 
-
-		for midpoint in self.cbp.midpoints:
-			nearest_index = find_k_nearest_points(self.clusterSize,midpoint,self.cbp.midpoints)
+		self.Euc_d = np.array([Euclidean_distance_vector(mp, self.cbp.midpoints) for mp in self.cbp.midpoints])
+		for midpoint, i in zip(self.cbp.midpoints, range(len(self.cbp.midpoints) )):
+			nearest_index = np.argsort(self.Euc_d[:,i])[1:self.clusterSize +1 ]
 			GE_point_index = np.unique(np.array(self.cbp.points)[nearest_index].reshape(-1))
 			model = SVM_Penalized(C = self.C, K = self.K)
-			model.fit(self.A_train[GE_point_index], self.C_train[GE_point_index], dQ)
+			model.fit(self.A_train[GE_point_index], self.C_train[GE_point_index], np.array(dQ)[GE_point_index])
 			self.SVM.append(model)
+			self.clusterCentroids.append(np.mean(A_train[GE_point_index], axis = 0) )
 
 	def ensemble(self, x):
 		I = Euclidean_distance_vector(x,self.clusterCentroids)
@@ -424,7 +424,7 @@ class GMSVM(object):
 			return {"clusterSize" : self.clusterSize,
 			"ensembleNum" : self.ensembleNum,
 			"C": self.C,
-			"CONST_C":self.CONST_C}
+			"K":self.K}
 
 	def set_params(self, **parameters):
 			# for parameter, value in parameters.items():
