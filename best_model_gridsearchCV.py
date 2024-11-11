@@ -11,7 +11,7 @@ import warnings
 warnings.filterwarnings("ignore", message="`use_label_encoder` is deprecated in 1.7.0.")
 
 from xgboost import XGBClassifier
-from CBP import referenced_method, LSVM, PSVM, GPSVM, GMSVM
+from CBP import referenced_method, LSVM, PSVM, GPSVM, GMSVM, GMSVM_reduced
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.neighbors import KNeighborsClassifier
 import sys
@@ -105,11 +105,18 @@ param_grid_GPSVM_Kmeans = {
 # }
 
 
-param_grid_GMSVM = {      
+param_grid_GMSVM = { 
+'clusterSize': [2,3,4,6,8],     
 'ensembleNum': [1, 3, 5], 
-'C':[1,10,100,1000,2000],     
-'clusterSize': [2,3,4,6,8],
-'K':[1,10,100,1000] 
+'C':[0.1,0.5,1],     
+'K':[0,0.2,0.5,0.7,1] 
+  }
+
+param_grid_GMSVM_reduced = {  
+'clusterSize': [2,3,4,6,8],    
+'ensembleNum': [1, 3, 5], 
+'C':[0.1,0.5,1],     
+'K':[0,0.2,0.5,0.7,1]
   }
 
 
@@ -149,7 +156,8 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
   reference_classifier = referenced_method()
   localized_linear_svm = LSVM()
   kmeans_based_GPSVM = GPSVM(method="KMeans")
-  GMSVM_model = GMSVM()
+  #GMSVM_model = GMSVM()
+  GMSVM_model_reduced = GMSVM_reduced()
   random_forest = RandomForestClassifier()
   mlp_classifier = MLPClassifier()
   xgboost_classifier = XGBClassifier(use_label_encoder=False, eval_metric='logloss')
@@ -162,7 +170,8 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
       reference_classifier,
       localized_linear_svm,
       kmeans_based_GPSVM,
-      GMSVM_model,
+      #GMSVM_model,
+      GMSVM_model_reduced,
       random_forest,
       mlp_classifier,
       xgboost_classifier,
@@ -174,7 +183,8 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
   param_grid_pujol, 
   param_grid_LSVM,
   param_grid_GPSVM_Kmeans, 
-  param_grid_GMSVM, 
+  #param_grid_GMSVM, 
+  param_grid_GMSVM_reduced, 
   param_grid_rf, 
   param_grid_MLP, 
   param_grid_xgb, 
@@ -261,7 +271,7 @@ def Accuracy_comparison_CV(n , nTest, example, sample_crite = 'POF', repeat = 20
           accuracyMatrixTrain[i, k] =  trainAccuracy
           accuracyMatrixPrediction[i, k] = predictionAccuracy
           print('training samples, best model has train accuracy: %f' %trainAccuracy + ' prediction accuracy:%f' %predictionAccuracy + '\n')
-      elif isinstance(model, GMSVM):
+      elif isinstance(model, GMSVM_reduced):
           fit_para = {'dQ':dQ}
           grid_search = GridSearchCV(model, para, cv=5, scoring='accuracy', verbose = 1)
 

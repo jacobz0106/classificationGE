@@ -11,7 +11,11 @@ import matplotlib.pyplot as plt
 
 
 class SVM_Penalized(object):
-	def __init__(self, C, K, tol = 0.0001):
+	def __init__(self, C, K, tol = 0.0001, reduced = False):
+		'''
+		reduced refer to ignoring the  W^TW part
+		'''
+		self.reduced = reduced
 		self.C = C
 		self.K = K
 		self.tol = tol
@@ -29,15 +33,21 @@ class SVM_Penalized(object):
 
 
 	def fit(self, A_train_original, C_train, dQ = None):
+		if self.reduced:
+			self.fit_reduced(A_train_original, C_train, dQ)
+			return
 		if dQ is None:
 			raise ValueError("must provide gradients")
-
 		# Standardize the data
 		scaler = StandardScaler()
 		A_train = scaler.fit_transform(A_train_original)
 
 		self.fit_SVM(A_train, C_train)
 
+		if self.K ==0:
+			self.coef_.append(self.coef_std / scaler.scale_)           # w consists of 2 elements
+			self.intercept_.append(self.intercept_std - np.dot(self.coef_std, scaler.mean_ / scaler.scale_))
+			return
 
 		n, p = np.array(A_train).shape
 		gp_env = gp.Env(empty=True) 
@@ -67,8 +77,10 @@ class SVM_Penalized(object):
 
 		penalty = self.K*( 1 - (w_1 @ w_2.T)**2/(w_1 @ w_1.T) )
 		t = (quicksum( alpha[j]*(w_1 - w_1_proj_2)@A_train[j].T*C_train[j]  for j in range(n)) - (w_1 - w_1_proj_2)@w_1_proj_2.T - penalty)/((w_1 - w_1_proj_2)@(w_1 - w_1_proj_2).T)
-		m.addConstr((quicksum( alpha[j]*(w_1 - w_1_proj_2)@A_train[j].T*C_train[j]  for j in range(n)) - (w_1 - w_1_proj_2)@w_1_proj_2.T)/((w_1 - w_1_proj_2)@(w_1 - w_1_proj_2).T) >= 0)
-		m.addConstr((quicksum( alpha[j]*(w_1 - w_1_proj_2)@A_train[j].T*C_train[j]  for j in range(n)) - (w_1 - w_1_proj_2)@w_1_proj_2.T)/((w_1 - w_1_proj_2)@(w_1 - w_1_proj_2).T) <= 1)
+		#m.addConstr((quicksum( alpha[j]*(w_1 - w_1_proj_2)@A_train[j].T*C_train[j]  for j in range(n)) - (w_1 - w_1_proj_2)@w_1_proj_2.T)/((w_1 - w_1_proj_2)@(w_1 - w_1_proj_2).T) >= 0)
+		#m.addConstr((quicksum( alpha[j]*(w_1 - w_1_proj_2)@A_train[j].T*C_train[j]  for j in range(n)) - (w_1 - w_1_proj_2)@w_1_proj_2.T)/((w_1 - w_1_proj_2)@(w_1 - w_1_proj_2).T) <= 1)
+		m.addConstr( t >= 0 )
+		m.addConstr(t <= 1)
 		w_t = t*w_1 + (1 - t)*w_1_proj_2
 		objective = quicksum(alpha[j] for j in range(n)) + 0.5*w_t@w_t.T + penalty*t - quicksum( alpha[j]*w_t@A_train[j].T*C_train[j] for j in range(n))
 
@@ -90,6 +102,7 @@ class SVM_Penalized(object):
 
 		t = (np.sum( [alpha_[j]*(w_1 - w_1_proj_2)@A_train[j].T*C_train[j]  for j in range(n)] ) - (w_1 - w_1_proj_2)@w_1_proj_2.T - penalty )/((w_1 - w_1_proj_2)@(w_1 - w_1_proj_2).T)
 
+		assert(t <= 1 and t>= 0)
 		w_penalized_std = t*w_1 + (1 - t)*w_1_proj_2
 
 		# Identify support vectors
@@ -111,12 +124,57 @@ class SVM_Penalized(object):
 		self.coef_.append(w_penalized_std / scaler.scale_)           # w consists of 2 elements
 		self.intercept_.append(intercept_penalized_std - np.dot(w_penalized_std, scaler.mean_ / scaler.scale_))
 
+	# def fit_reduced(self, A_train_original, C_train, dQ = None):
+	# 	if dQ is None:
+	# 		raise ValueError("must provide gradients")
+	# 	n, p = np.array(A_train_original).shape
+	# 	#standardize dQ
+	# 	dQ = [ gradient/np.linalg.norm(gradient) for gradient in dQ]
+	# 	normalized_mean_vector = np.mean(dQ , axis=0)/np.linalg.norm(np.mean(dQ , axis=0))
+	# 	# Define the dual variables (alphas)
+	# 	alpha = cp.Variable(n)
+
+	# 	# Standardize the data
+	# 	scaler = StandardScaler()
+	# 	A_train = scaler.fit_transform(A_train_original)
+
+	# 	objective = cp.Maximize(cp.sum(alpha) - cp.sum(cp.multiply(np.matmul(normalized_mean_vector, A_train.T), cp.multiply(C_train, alpha) )))
+
+	# 	# Constraints
+	# 	constraints = [alpha >= 0, alpha <= self.C, cp.sum(cp.multiply(C_train, alpha)) == 0]
+
+	# 	# Solve the problem using the SCS solver
+	# 	problem = cp.Problem(objective, constraints)
+	# 	problem.solve(solver=cp.SCS)
+
+
+	# 	# Get the optimal alpha values
+	# 	self.alpha = alpha.value
+
+	# 	# Compute the weight vector w
+	# 	w = normalized_mean_vector
+
+	# 	# Identify support vectors
+	# 	support_vectors = []
+	# 	tol = 0.001
+
+	# 	for i in range(n):
+	# 		if tol < self.alpha[i] <= self.C:
+	# 			support_vectors.append(i)
+		
+	# 	# Calculate b using the average value of the support vectors
+	# 	if support_vectors:
+	# 		b_values = [C_train[i] - np.dot(A_train[i], normalized_mean_vector) for i in support_vectors]
+	# 		intercept_penalized_std = np.mean(b_values)
+	# 	else:
+	# 		intercept_penalized_std = 0
+
+	# 	self.coef_.append(normalized_mean_vector / scaler.scale_)           # w consists of 2 elements
+	# 	self.intercept_.append(intercept_penalized_std - np.dot(normalized_mean_vector, scaler.mean_ / scaler.scale_))
+
 
 	def predict(self, A_train):
 		return( np.array([1 if np.sum(self.coef_[0]*A_train[j]) + self.intercept_[0] >= 0 else -1   for j in range(len(A_train))]) )
-
-
-
 
 
 if __name__ == '__main__':

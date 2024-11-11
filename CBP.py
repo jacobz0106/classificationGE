@@ -305,6 +305,7 @@ class GPSVM(object):
 			model = svm.SVC(kernel='linear', C = self.C)
 			model.fit(self.A_train[subset_index], self.C_train[subset_index])
 			self.SVM.append(model)
+		self.labels_ = self.clusters.labels_
 
 	def ensemble(self, x):
 		I = Euclidean_distance_vector(x,self.clusterCentroids)
@@ -343,7 +344,7 @@ class GPSVM(object):
 # ---------------------------------- GMSVM Algorithm with clusters_overlap---------------------------------- 
 
 class GMSVM(object):
-	def __init__(self, clusterSize = 3,ensembleNum=1,C = 0.1,  K = 1):
+	def __init__(self, clusterSize = 3,ensembleNum=1,C = 0.1,  K = 1, reduced = False):
 
 		self.cbp = []
 		self.clusterSize = clusterSize
@@ -354,7 +355,7 @@ class GMSVM(object):
 		self.K = K
 		self.clusters = []
 		self.SVM = []
-
+		self.reduced = reduced
 
 	def _train(self, A_train, C_train):
 		# Check if the input C_train is a numpy array contaning -1 and 1
@@ -396,7 +397,7 @@ class GMSVM(object):
 		for midpoint, i in zip(self.cbp.midpoints, range(len(self.cbp.midpoints) )):
 			nearest_index = np.argsort(self.Euc_d[:,i])[1:self.clusterSize +1 ]
 			GE_point_index = np.unique(np.array(self.cbp.points)[nearest_index].reshape(-1))
-			model = SVM_Penalized(C = self.C, K = self.K)
+			model = SVM_Penalized(C = self.C, K = self.K, reduced = self.reduced)
 			model.fit(self.A_train[GE_point_index], self.C_train[GE_point_index], np.array(dQ)[GE_point_index])
 			self.SVM.append(model)
 			self.clusterCentroids.append(np.mean(A_train[GE_point_index], axis = 0) )
@@ -433,6 +434,129 @@ class GMSVM(object):
 			return self
 
 
+
+# ---------------------------------- GMSVM Algorithm with clusters_overlap---------------------------------- 
+
+class GMSVM_reduced(object):
+	def __init__(self, clusterSize = 3,ensembleNum=1,C = 0.1,  K = 1, reduced = False, similarity = 0.5):
+
+		self.cbp = []
+		self.clusterSize = clusterSize
+		self.clusterCentroids = []
+		self.ensembleNum = ensembleNum
+		self.clusterNum  = 0
+		self.C = C 
+		self.K = K
+		self.clusters = []
+		self.SVM = []
+		self.reduced = reduced
+		self.similarity = similarity
+
+	def reduce_clusters(self):
+		self.clusterSimilarity = np.zeros((len(self.cbp.midpoints),len(self.cbp.midpoints)))
+
+		# Convert lists of clusters to a set of sets for fast intersection
+		cluster_sets = [set(cluster) for cluster in self.midpointClusters]
+
+		# Create a matrix of common elements by counting intersections
+		common_elements_matrix = np.array([[len(cluster_sets[i].intersection(cluster_sets[j])) for j in range(len(cluster_sets))] for i in range(len(cluster_sets))])
+		self.clusterSimilarity = common_elements_matrix / self.clusterSize
+		i=0
+		while (i<len(self.clusters.labels_ )):
+			# do not modify self.clusterSimilarity matrix during reducing
+			similarClusters = self.clusterSimilarity[:,self.clusters.labels_[i]] > self.similarity 
+			similarClusters[ self.clusters.labels_[i] ] = False
+			index = np.array(range(self.clusterNum))[similarClusters]
+			#delete 
+			self.clusters.labels_ = self.clusters.labels_[~np.isin(self.clusters.labels_, index)]
+			i = i +1
+		# Remove the specified rows and columns (indices in A)
+		self.clusterNum  = len(self.clusters.labels_)
+		self.clusterSimilarity = self.clusterSimilarity[np.ix_(self.clusters.labels_, self.clusters.labels_)]
+
+
+	def _train(self, A_train, C_train):
+		# Check if the input C_train is a numpy array contaning -1 and 1
+		valid_values = {-1, 1} 
+		if isinstance(C_train, (list, np.ndarray)):
+			unique_values = set(C_train)
+			if not (valid_values.issubset(unique_values) and len(unique_values) == 2):
+				raise ValueError("Input array must contain both -1 and 1.")
+		else:
+			raise ValueError("Input must be a list or a numpy array.")
+		#[0,1] -> [1, -1]
+		self.transformer = LabelEncode([-1,1])
+		self.transformer.fit(C_train)
+		self.C_train = self.transformer.transform(C_train)
+
+		self.A_train = A_train
+		self.cbp = CBP(A_train, C_train)
+		self.d = len(A_train[0])
+		self.clusterLabel = []
+
+
+	def fit(self, A_train, C_train, dQ = None):
+		'''
+		cluster = hierarchicalClustering or Kmeans
+		'''
+		self.SVM = []
+		self.cbp = []
+		self.clusters = clusters()
+		self._train(A_train, C_train)
+		self.clusterNum  = self.cbp.count
+		self.clusters.labels_ = np.array(range(self.clusterNum))
+		self.labels_ = np.array(range(self.clusterNum))
+		self.clusters.clusterNum = self.cbp.count
+		#self.clusterCentroids = self.cbp.midpoints
+		self.clusterCentroids = []
+		# define the clusters 
+		self.Euc_d = np.array([Euclidean_distance_vector(mp, self.cbp.midpoints) for mp in self.cbp.midpoints])
+		self.midpointClusters = []
+		for midpoint, i in zip(self.cbp.midpoints, range(len(self.cbp.midpoints) )):
+			nearest_index = np.argsort(self.Euc_d[:,i])[1:self.clusterSize +1 ]
+			self.midpointClusters.append(nearest_index)
+		if self.similarity < 1.0:
+			self.reduce_clusters()
+
+		for i in self.clusters.labels_:
+			nearest_index = self.midpointClusters[i]
+			GE_point_index = np.unique(np.array(self.cbp.points)[nearest_index].reshape(-1))
+			model = SVM_Penalized(C = self.C, K = self.K, reduced = self.reduced)
+			model.fit(self.A_train[GE_point_index], self.C_train[GE_point_index], np.array(dQ)[GE_point_index])
+			self.SVM.append(model)
+			self.clusterCentroids.append(np.mean(A_train[GE_point_index], axis = 0) )
+
+	def ensemble(self, x):
+		I = Euclidean_distance_vector(x,self.clusterCentroids)
+		index = I.argsort()[0:self.ensembleNum]
+		classifier = 0.0
+		for i in range(len(index)):
+			j = index[i]
+
+			weight = 1/I[index[i]]/(np.sum(1/I[index]))
+			classifier = classifier + weight*self.SVM[j].predict([x])
+		if classifier >= 0:
+			return 1
+		else:
+			return -1
+	def predict(self,x):
+		ensembleVec = np.vectorize(self.ensemble, signature = '(n)->()')
+		predict = np.array(ensembleVec(np.array(x).reshape(-1,self.d))).reshape(-1)
+		#[1,-1] -> [0, 1]
+		return self.transformer.transform_back(predict)
+
+	def get_params(self,deep=True):
+			return {"clusterSize" : self.clusterSize,
+			"ensembleNum" : self.ensembleNum,
+			"C": self.C,
+			"K":self.K,
+			"similarity":self.similarity}
+
+	def set_params(self, **parameters):
+			# for parameter, value in parameters.items():
+			#     setattr(self, parameter, value)
+			self.__init__(**parameters)
+			return self
 
 
 # ---------------------------------- LSVM Algorithm ---------------------------------- 
