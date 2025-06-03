@@ -395,7 +395,7 @@ class GMSVM(object):
 		# define the clusters 
 		self.Euc_d = np.array([Euclidean_distance_vector(mp, self.cbp.midpoints) for mp in self.cbp.midpoints])
 		for midpoint, i in zip(self.cbp.midpoints, range(len(self.cbp.midpoints) )):
-			nearest_index = np.argsort(self.Euc_d[:,i])[1:self.clusterSize +1 ]
+			nearest_index = np.argsort(self.Euc_d[:,i])[0:self.clusterSize +1 ]
 			GE_point_index = np.unique(np.array(self.cbp.points)[nearest_index].reshape(-1))
 			model = SVM_Penalized(C = self.C, K = self.K, reduced = self.reduced)
 			model.fit(self.A_train[GE_point_index], self.C_train[GE_point_index], np.array(dQ)[GE_point_index])
@@ -501,9 +501,10 @@ class GMSVM_reduced(object):
 		'''
 		self.SVM = []
 		self.cbp = []
-		self.clusters = clusters()
+		self.dQ = dQ
 		self._train(A_train, C_train)
 		self.clusterNum  = self.cbp.count
+		self.clusters = clusters()
 		self.clusters.labels_ = np.array(range(self.clusterNum))
 		self.labels_ = np.array(range(self.clusterNum))
 		self.clusters.clusterNum = self.cbp.count
@@ -513,7 +514,7 @@ class GMSVM_reduced(object):
 		self.Euc_d = np.array([Euclidean_distance_vector(mp, self.cbp.midpoints) for mp in self.cbp.midpoints])
 		self.midpointClusters = []
 		for midpoint, i in zip(self.cbp.midpoints, range(len(self.cbp.midpoints) )):
-			nearest_index = np.argsort(self.Euc_d[:,i])[1:self.clusterSize +1 ]
+			nearest_index = np.argsort(self.Euc_d[:,i])[0:self.clusterSize +1 ]
 			self.midpointClusters.append(nearest_index)
 		if self.similarity < 1.0:
 			self.reduce_clusters()
@@ -539,24 +540,81 @@ class GMSVM_reduced(object):
 			return 1
 		else:
 			return -1
+
 	def predict(self,x):
 		ensembleVec = np.vectorize(self.ensemble, signature = '(n)->()')
 		predict = np.array(ensembleVec(np.array(x).reshape(-1,self.d))).reshape(-1)
 		#[1,-1] -> [0, 1]
 		return self.transformer.transform_back(predict)
 
+
+	def score_function(self,x):
+		I = Euclidean_distance_vector(x,self.clusterCentroids)
+		index = I.argsort()[0:self.ensembleNum]
+		classifier = 0.0
+		for i in range(len(index)):
+			j = index[i]
+
+			weight = 1/I[index[i]]/(np.sum(1/I[index]))
+			classifier = classifier + weight*( np.sum(self.SVM[j].coef_[0]*x) + self.SVM[j].intercept_[0]  )
+		return classifier
+	def decision_function(self,x):
+		scoreVec = np.vectorize(self.score_function, signature = '(n)->()')
+		decisionScore = np.array(scoreVec(np.array(x).reshape(-1,self.d))).reshape(-1)
+		return decisionScore
+
 	def get_params(self,deep=True):
-			return {"clusterSize" : self.clusterSize,
-			"ensembleNum" : self.ensembleNum,
-			"C": self.C,
-			"K":self.K,
-			"similarity":self.similarity}
+		return {"clusterSize" : self.clusterSize,
+		"ensembleNum" : self.ensembleNum,
+		"C": self.C,
+		"K":self.K,
+		"similarity":self.similarity}
 
 	def set_params(self, **parameters):
-			# for parameter, value in parameters.items():
-			#     setattr(self, parameter, value)
-			self.__init__(**parameters)
-			return self
+		# for parameter, value in parameters.items():
+		#     setattr(self, parameter, value)
+		self.__init__(**parameters)
+		return self
+
+	def update_params(self, **parameters):
+		cbp = self.cbp
+		dQ = self.dQ
+		C_train = self.C_train
+		A_train = self.A_train
+		self.__init__(**parameters)
+		self.cbp = cbp
+		self.transformer = LabelEncode([-1,1])
+		self.transformer.fit(C_train)
+		self.C_train = self.transformer.transform(C_train)
+
+		self.A_train = A_train
+		self.cbp = CBP(A_train, C_train)
+		self.d = len(A_train[0])
+		self.clusterLabel = []
+
+		self.clusterNum  = self.cbp.count
+		self.clusters = clusters()
+		self.clusters.labels_ = np.array(range(self.clusterNum))
+		self.labels_ = np.array(range(self.clusterNum))
+		self.clusters.clusterNum = self.cbp.count
+		#self.clusterCentroids = self.cbp.midpoints
+		self.clusterCentroids = []
+		# define the clusters 
+		self.Euc_d = np.array([Euclidean_distance_vector(mp, self.cbp.midpoints) for mp in self.cbp.midpoints])
+		self.midpointClusters = []
+		for midpoint, i in zip(self.cbp.midpoints, range(len(self.cbp.midpoints) )):
+			nearest_index = np.argsort(self.Euc_d[:,i])[1:self.clusterSize +1 ]
+			self.midpointClusters.append(nearest_index)
+		if self.similarity < 1.0:
+			self.reduce_clusters()
+
+		for i in self.clusters.labels_:
+			nearest_index = self.midpointClusters[i]
+			GE_point_index = np.unique(np.array(self.cbp.points)[nearest_index].reshape(-1))
+			model = SVM_Penalized(C = self.C, K = self.K, reduced = self.reduced)
+			model.fit(self.A_train[GE_point_index], self.C_train[GE_point_index], np.array(dQ)[GE_point_index])
+			self.SVM.append(model)
+			self.clusterCentroids.append(np.mean(A_train[GE_point_index], axis = 0) )
 
 
 # ---------------------------------- LSVM Algorithm ---------------------------------- 
