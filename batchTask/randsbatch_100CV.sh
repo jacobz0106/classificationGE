@@ -1,5 +1,5 @@
 #!/bin/bash
-sbatch --time=13-23:00:00 --cpus-per-task=4 --mem-per-cpu=10G -o out/brussoutputRand.out -e out/brussRand.err randbestModel_bruss.sh 
-sbatch --time=13-23:00:00 --cpus-per-task=4 --mem-per-cpu=10G -o out/ellipticoutputRand.out -e out/ellipticRand.err randbestModel_elliptic.sh 
-sbatch --time=13-23:00:00 --cpus-per-task=4 --mem-per-cpu=10G -o out/f1outputRand.out -e out/f1Rand.err randbestModel_f1.sh 
-sbatch --time=13-23:00:00 --cpus-per-task=4 --mem-per-cpu=10G -o out/f2outputRand.out -e out/f2Rand.err randbestModel_f2.sh 
+sbatch --time=13-6:23:00 --cpus-per-task=4 --mem-per-cpu=10G -o out/brussoutputRand.out -e out/brussRand.err randbestModel_bruss.sh 
+sbatch --time=13-6:23:00 --cpus-per-task=4 --mem-per-cpu=10G -o out/ellipticoutputRand.out -e out/ellipticRand.err randbestModel_elliptic.sh 
+sbatch --time=13-6:23:00 --cpus-per-task=4 --mem-per-cpu=10G -o out/f1outputRand.out -e out/f1Rand.err randbestModel_f1.sh 
+sbatch --time=13-6:23:00 --cpus-per-task=4 --mem-per-cpu=10G -o out/f2outputRand.out -e out/f2Rand.err randbestModel_f2.sh 
