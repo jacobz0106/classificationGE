@@ -1,13 +1,33 @@
+import os
+import warnings
+# Set environment variable to suppress warnings at Python level
+os.environ['PYTHONWARNINGS'] = 'ignore'
+# Suppress all warnings (must be before other imports)
+warnings.simplefilter("ignore")
+warnings.filterwarnings("ignore")
+# Specifically suppress FutureWarnings from pandas
+warnings.filterwarnings("ignore", category=FutureWarning)
+# Suppress warnings from imported modules
+warnings.filterwarnings("ignore", module="dataGeneration")
+# Suppress joblib/loky resource_tracker warnings
+warnings.filterwarnings("ignore", message=".*resource_tracker.*")
+warnings.filterwarnings("ignore", module="joblib.externals.loky.backend.resource_tracker")
+warnings.filterwarnings("ignore", module="multiprocessing.resource_tracker")
+warnings.filterwarnings("ignore", message="There appear to be.*leaked.*objects")
+warnings.filterwarnings("ignore", message=".*FileNotFoundError.*")
+# Suppress specific UserWarning about use_label_encoder deprecation
+warnings.filterwarnings("ignore", message="`use_label_encoder` is deprecated in 1.7.0.")
+
 from sklearn.model_selection import GridSearchCV, cross_val_score, KFold, train_test_split
 import pandas as pd
+# Suppress pandas FutureWarnings
+pd.options.mode.chained_assignment = None  # Suppress SettingWithCopyWarning
+pd.set_option('future.no_silent_downcasting', True)
 import numpy as np
 from dataGeneration import *
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
-import warnings
-# Suppress specific UserWarning about use_label_encoder deprecation
-warnings.filterwarnings("ignore", message="`use_label_encoder` is deprecated in 1.7.0.")
 
 from xgboost import XGBClassifier
 from CBP import referenced_method, LSVM, PSVM, GPSVM, GMSVM, GMSVM_reduced
@@ -16,6 +36,7 @@ from sklearn.neighbors import KNeighborsClassifier
 import sys
 # ADD near other imports
 from joblib import Parallel, delayed
+from tqdm import tqdm
 
 
 
@@ -131,7 +152,7 @@ def perform_grid_search_cv(model, param_grid, X, y, cv=5, n_jobs=1, **fit_params
   grid_search = GridSearchCV(model, param_grid, cv=cv, scoring='accuracy', verbose=1, n_jobs=n_jobs)
   grid_search.fit(X, y, **fit_params)
   best_model = grid_search.best_estimator_
-  print(best_model.get_params())
+  #print(best_model.get_params())
   return best_model
 
 
@@ -265,14 +286,34 @@ def Accuracy_comparison_CV(n, nTest, example, sample_crite='POF', repeat=20,
     return train_row, pred_row
 
   # ---- run epochs in parallel (process-based; estimators must be picklable) ----
-  results = Parallel(n_jobs=n_jobs_outer, backend="loky")(
-      delayed(_run_one_epoch)(i) for i in range(repeat)
+  results = Parallel(n_jobs=n_jobs_outer, backend="loky", verbose=0)(
+      delayed(_run_one_epoch)(i) for i in tqdm(range(repeat), desc=f"Epochs (n={n})", disable=not verbose)
   )
 
   accuracyMatrixTrain      = np.vstack([r[0] for r in results])
   accuracyMatrixPrediction = np.vstack([r[1] for r in results])
   return accuracyMatrixTrain, accuracyMatrixPrediction
 
+
+
+def _run_single_train_size(train_size, test_size, example_name, sample_method, 
+                           n_jobs_outer=4, n_jobs_cv=1, xgb_n_jobs=2, verbose=True):
+  """
+  Run a single train_size experiment. This function is designed to be called in parallel.
+  """
+  print(f'\n================ Running train_size={train_size} ================\n')
+
+  accuracyTrain, accuracyPrediction = Accuracy_comparison_CV(
+      int(train_size), test_size, str(example_name), str(sample_method),
+      repeat=20, n_jobs_outer=n_jobs_outer, n_jobs_cv=n_jobs_cv, xgb_n_jobs=xgb_n_jobs, verbose=verbose
+  )
+
+  filenameTrain   = f'../Results/CVresults/Train_accuracy_{train_size}_{test_size}_{example_name}_{sample_method}.csv'
+  filenamePredict = f'../Results/CVresults/Prediction_accuracy_{train_size}_{test_size}_{example_name}_{sample_method}.csv'
+  np.savetxt(filenameTrain, accuracyTrain, delimiter=",", header='')
+  np.savetxt(filenamePredict, accuracyPrediction, delimiter=",", header='')
+  print(f'[train_size={train_size}] done.')
+  return train_size
 
 
 def main():
@@ -288,23 +329,24 @@ def main():
   test_size = int(test_size)
 
   # Parallel knobs (tune as you like)
-  N_OUTER = 4      # epochs in parallel
+  N_OUTER = 4      # epochs in parallel (within each train_size experiment)
   N_CV    = 1      # threads per GridSearchCV
   XGB_J   = 2      # threads inside XGBoost
+  N_TRAIN_SIZES = 3  # number of train_size experiments to run in parallel
 
-  for train_size in TRAIN_SIZES:
-    print(f'\n================ Running train_size={train_size} ================\n')
-
-    accuracyTrain, accuracyPrediction = Accuracy_comparison_CV(
-        int(train_size), test_size, str(example_name), str(sample_method),
-        repeat=20, n_jobs_outer=N_OUTER, n_jobs_cv=N_CV, xgb_n_jobs=XGB_J, verbose=True
-    )
-
-    filenameTrain   = f'../Results/CVresults/Train_accuracy_{train_size}_{test_size}_{example_name}_{sample_method}.csv'
-    filenamePredict = f'../Results/CVresults/Prediction_accuracy_{train_size}_{test_size}_{example_name}_{sample_method}.csv'
-    np.savetxt(filenameTrain, accuracyTrain, delimiter=",", header='')
-    np.savetxt(filenamePredict, accuracyPrediction, delimiter=",", header='')
-    print('done.')
+  # Run train_size experiments in parallel
+  print(f'\n========== Running {len(TRAIN_SIZES)} train_size experiments ==========')
+  print(f'Running up to {N_TRAIN_SIZES} train_size experiments in parallel\n')
+  
+  # Use tqdm to show progress for train_size experiments
+  results = Parallel(n_jobs=N_TRAIN_SIZES, backend="loky", verbose=0)(
+      delayed(_run_single_train_size)(
+          train_size, test_size, example_name, sample_method,
+          n_jobs_outer=N_OUTER, n_jobs_cv=N_CV, xgb_n_jobs=XGB_J, verbose=True
+      ) for train_size in tqdm(TRAIN_SIZES, desc="Train sizes", position=0, leave=True)
+  )
+  
+  print(f'\n========== All {len(TRAIN_SIZES)} train_size experiments completed ==========')
 
 
 if __name__ == '__main__':
