@@ -22,7 +22,7 @@ from sklearn.model_selection import GridSearchCV, cross_val_score, KFold, train_
 import pandas as pd
 # Suppress pandas FutureWarnings
 pd.options.mode.chained_assignment = None  # Suppress SettingWithCopyWarning
-pd.set_option('future.no_silent_downcasting', True)
+
 import numpy as np
 from dataGeneration import *
 from sklearn.ensemble import RandomForestClassifier
