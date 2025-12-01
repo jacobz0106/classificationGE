@@ -329,10 +329,10 @@ def main():
   test_size = int(test_size)
 
   # Parallel knobs (tune as you like)
-  N_OUTER = 4      # epochs in parallel (within each train_size experiment)
+  N_OUTER = 2      # epochs in parallel (within each train_size experiment)
   N_CV    = 1      # threads per GridSearchCV
-  XGB_J   = 2      # threads inside XGBoost
-  N_TRAIN_SIZES = 3  # number of train_size experiments to run in parallel
+  XGB_J   = 1      # threads inside XGBoost
+  N_TRAIN_SIZES = 5  # number of train_size experiments to run in parallel
 
   # Run train_size experiments in parallel
   print(f'\n========== Running {len(TRAIN_SIZES)} train_size experiments ==========')
