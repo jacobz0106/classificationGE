@@ -1,5 +1,7 @@
 import os
 import warnings
+# Path helper
+from pathlib import Path
 # Set environment variable to suppress warnings at Python level
 os.environ['PYTHONWARNINGS'] = 'ignore'
 # Suppress all warnings (must be before other imports)
@@ -36,6 +38,7 @@ from sklearn.neighbors import KNeighborsClassifier
 import sys
 # ADD near other imports
 from joblib import Parallel, delayed
+from joblib.externals.loky.process_executor import TerminatedWorkerError
 from tqdm import tqdm
 
 
@@ -286,14 +289,36 @@ def Accuracy_comparison_CV(n, nTest, example, sample_crite='POF', repeat=20,
     return train_row, pred_row
 
   # ---- run epochs in parallel (process-based; estimators must be picklable) ----
-  results = Parallel(n_jobs=n_jobs_outer, backend="loky", verbose=0)(
-      delayed(_run_one_epoch)(i) for i in tqdm(range(repeat), desc=f"Epochs (n={n})", disable=not verbose)
-  )
+  epoch_indices = list(range(repeat))
+  epoch_iter = tqdm(epoch_indices, desc=f"Epochs (n={n})", disable=not verbose)
+  try:
+    results = Parallel(n_jobs=n_jobs_outer, backend="loky", verbose=0)(
+        delayed(_run_one_epoch)(i) for i in epoch_iter
+    )
+  except TerminatedWorkerError as exc:
+    epoch_iter.close()
+    if verbose:
+      print(f"[Epoch runner] Parallel execution failed ({exc}). Falling back to sequential.")
+    results = [
+        _run_one_epoch(i)
+        for i in tqdm(epoch_indices, desc=f"Epochs (n={n}) [sequential fallback]", disable=not verbose)
+    ]
 
   accuracyMatrixTrain      = np.vstack([r[0] for r in results])
   accuracyMatrixPrediction = np.vstack([r[1] for r in results])
   return accuracyMatrixTrain, accuracyMatrixPrediction
 
+
+def _train_size_result_files(train_size, test_size, example_name, sample_method):
+  base_dir = Path('../Results/CVresults')
+  train_path = base_dir / f'Train_accuracy_{train_size}_{test_size}_{example_name}_{sample_method}.csv'
+  pred_path  = base_dir / f'Prediction_accuracy_{train_size}_{test_size}_{example_name}_{sample_method}.csv'
+  return train_path, pred_path
+
+
+def _train_size_results_exist(train_size, test_size, example_name, sample_method):
+  train_path, pred_path = _train_size_result_files(train_size, test_size, example_name, sample_method)
+  return train_path.is_file() and pred_path.is_file()
 
 
 def _run_single_train_size(train_size, test_size, example_name, sample_method, 
@@ -308,10 +333,10 @@ def _run_single_train_size(train_size, test_size, example_name, sample_method,
       repeat=20, n_jobs_outer=n_jobs_outer, n_jobs_cv=n_jobs_cv, xgb_n_jobs=xgb_n_jobs, verbose=verbose
   )
 
-  filenameTrain   = f'../Results/CVresults/Train_accuracy_{train_size}_{test_size}_{example_name}_{sample_method}.csv'
-  filenamePredict = f'../Results/CVresults/Prediction_accuracy_{train_size}_{test_size}_{example_name}_{sample_method}.csv'
-  np.savetxt(filenameTrain, accuracyTrain, delimiter=",", header='')
-  np.savetxt(filenamePredict, accuracyPrediction, delimiter=",", header='')
+  train_path, pred_path = _train_size_result_files(train_size, test_size, example_name, sample_method)
+  train_path.parent.mkdir(parents=True, exist_ok=True)
+  np.savetxt(train_path, accuracyTrain, delimiter=",", header='')
+  np.savetxt(pred_path, accuracyPrediction, delimiter=",", header='')
   print(f'[train_size={train_size}] done.')
   return train_size
 
@@ -334,19 +359,47 @@ def main():
   XGB_J   = 1      # threads inside XGBoost
   N_TRAIN_SIZES = 5  # number of train_size experiments to run in parallel
 
-  # Run train_size experiments in parallel
-  print(f'\n========== Running {len(TRAIN_SIZES)} train_size experiments ==========')
+  # Determine which train sizes still need to run
+  completed_sizes = []
+  pending_sizes   = []
+  for train_size in TRAIN_SIZES:
+    if _train_size_results_exist(train_size, test_size, example_name, sample_method):
+      completed_sizes.append(train_size)
+    else:
+      pending_sizes.append(train_size)
+
+  if completed_sizes:
+    print(f"Already have results for train_size values: {completed_sizes}")
+
+  if not pending_sizes:
+    print("\nAll requested train_size experiments already completed. Nothing to run.\n")
+    return
+
+  # Run remaining train_size experiments in parallel
+  print(f'\n========== Running {len(pending_sizes)} remaining train_size experiments ==========')
   print(f'Running up to {N_TRAIN_SIZES} train_size experiments in parallel\n')
   
   # Use tqdm to show progress for train_size experiments
-  results = Parallel(n_jobs=N_TRAIN_SIZES, backend="loky", verbose=0)(
-      delayed(_run_single_train_size)(
-          train_size, test_size, example_name, sample_method,
-          n_jobs_outer=N_OUTER, n_jobs_cv=N_CV, xgb_n_jobs=XGB_J, verbose=True
-      ) for train_size in tqdm(TRAIN_SIZES, desc="Train sizes", position=0, leave=True)
-  )
+  train_sizes_iter = tqdm(pending_sizes, desc="Train sizes", position=0, leave=True)
+  try:
+    results = Parallel(n_jobs=N_TRAIN_SIZES, backend="loky", verbose=0)(
+        delayed(_run_single_train_size)(
+            train_size, test_size, example_name, sample_method,
+            n_jobs_outer=N_OUTER, n_jobs_cv=N_CV, xgb_n_jobs=XGB_J, verbose=True
+        ) for train_size in train_sizes_iter
+    )
+  except TerminatedWorkerError as exc:
+    train_sizes_iter.close()
+    print(f"[Main] Parallel train-size execution failed ({exc}). Falling back to sequential processing.")
+    results = [
+        _run_single_train_size(
+            train_size, test_size, example_name, sample_method,
+            n_jobs_outer=N_OUTER, n_jobs_cv=N_CV, xgb_n_jobs=XGB_J, verbose=True
+        )
+        for train_size in tqdm(pending_sizes, desc="Train sizes [sequential fallback]", position=0, leave=True)
+    ]
   
-  print(f'\n========== All {len(TRAIN_SIZES)} train_size experiments completed ==========')
+  print(f'\n========== Completed {len(pending_sizes)} new train_size experiments ==========')
 
 
 if __name__ == '__main__':
